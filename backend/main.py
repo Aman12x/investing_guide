@@ -1,28 +1,17 @@
 import logging
 import os
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from routers import analyze, ask, schedule, watchlist
-from services.scheduler import start_scheduler, stop_scheduler
+from routers import analyze, ask, watchlist
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await start_scheduler()
-    logger.info("EarningsLens backend started")
-    yield
-    await stop_scheduler()
-    logger.info("EarningsLens backend stopped")
-
-
-app = FastAPI(title="EarningsLens", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="EarningsLens", version="1.0.0")
 
 _cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")]
 app.add_middleware(
@@ -36,7 +25,6 @@ app.add_middleware(
 app.include_router(analyze.router)
 app.include_router(ask.router)
 app.include_router(watchlist.router)
-app.include_router(schedule.router)
 
 
 @app.get("/health")

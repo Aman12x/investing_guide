@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy import Date, DateTime, String, Text, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import mapped_column
 
 from database import Base
@@ -35,17 +35,6 @@ class Watchlist(Base):
     ticker = mapped_column(String(10), nullable=False, unique=True)
     added_at = mapped_column(DateTime, default=_utcnow)
 
-
-class Subscription(Base):
-    __tablename__ = "subscriptions"
-
-    id = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    email = mapped_column(String, nullable=False, unique=True)
-    tickers = mapped_column(ARRAY(String))
-    schedule = mapped_column(String)   # "earnings_day" | "daily" | "weekly"
-    format = mapped_column(String)     # "summary" | "full" | "bullets"
-    active = mapped_column(Boolean, default=True)
-    created_at = mapped_column(DateTime, default=_utcnow)
 
 
 class QASession(Base):

@@ -22,7 +22,3 @@ class NewsError(EarningsLensError):
 
 class AnalystError(EarningsLensError):
     pass
-
-
-class EmailError(EarningsLensError):
-    pass

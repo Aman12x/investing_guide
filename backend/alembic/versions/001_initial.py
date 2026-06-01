@@ -41,18 +41,6 @@ def upgrade() -> None:
     op.create_unique_constraint("uq_watchlist_ticker", "watchlist", ["ticker"])
 
     op.create_table(
-        "subscriptions",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("email", sa.String, nullable=False),
-        sa.Column("tickers", postgresql.ARRAY(sa.String)),
-        sa.Column("schedule", sa.String),
-        sa.Column("format", sa.String),
-        sa.Column("active", sa.Boolean, server_default=sa.text("true")),
-        sa.Column("created_at", sa.DateTime, server_default=sa.func.now()),
-    )
-    op.create_unique_constraint("uq_subscriptions_email", "subscriptions", ["email"])
-
-    op.create_table(
         "qa_sessions",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("ticker", sa.String(10), nullable=False),
@@ -65,6 +53,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("qa_sessions")
-    op.drop_table("subscriptions")
     op.drop_table("watchlist")
     op.drop_table("reports")

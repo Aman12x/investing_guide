@@ -88,10 +88,3 @@ class ReportJSON(BaseModel):
 class AskRequest(BaseModel):
     question: str
     history: list[dict] = Field(default_factory=list)
-
-
-class SubscriptionConfig(BaseModel):
-    email: str
-    tickers: list[str]
-    schedule: Literal["earnings_day", "daily", "weekly"]
-    format: Literal["summary", "full", "bullets"]

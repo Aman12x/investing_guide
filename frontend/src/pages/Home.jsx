@@ -5,7 +5,6 @@ import Sidebar from '../components/Sidebar';
 import ReportView from '../components/ReportView';
 import EmptyState from '../components/EmptyState';
 import QABar from '../components/QABar';
-import EmailModal from '../components/EmailModal';
 import Toast from '../components/Toast';
 import styles from './Home.module.css';
 
@@ -14,13 +13,7 @@ export default function Home() {
   const { currentReport, history, isLoading, loadingMessage, error } = state;
   const { answer, isThinking, ask } = useQA(currentReport?.ticker);
 
-  const [emailOpen, setEmailOpen] = useState(false);
   const [toast, setToast] = useState('');
-
-  function handleEmailConfirm() {
-    setEmailOpen(false);
-    setToast('Email subscription saved!');
-  }
 
   return (
     <div className={styles.layout}>
@@ -31,9 +24,6 @@ export default function Home() {
             <span className={styles.reportLabel}>
               {currentReport.ticker} — {currentReport.quarter}
             </span>
-            <button className={styles.emailBtn} onClick={() => setEmailOpen(true)}>
-              Email Report
-            </button>
           </div>
         )}
       </header>
@@ -78,13 +68,6 @@ export default function Home() {
           />
         </div>
       </div>
-
-      <EmailModal
-        open={emailOpen}
-        onClose={() => setEmailOpen(false)}
-        onConfirm={handleEmailConfirm}
-        ticker={currentReport?.ticker}
-      />
 
       <Toast message={toast} onDismiss={() => setToast('')} />
     </div>

@@ -1,8 +1,8 @@
 # EarningsLens — CLAUDE.md
 
 > Agentic earnings call analyst. Scrapes transcripts, extracts financials, scores sentiment,
-> generates analyst-grade reports weighted against Reddit/news/analyst signals, answers
-> follow-up questions, and delivers digests via email on a schedule.
+> generates analyst-grade reports weighted against Reddit/news/analyst signals, and answers
+> follow-up questions. Stateless open app — any user can analyze any ticker, no accounts.
 > FastAPI backend · Vite/React frontend · PostgreSQL · Railway.
 
 ---
@@ -19,14 +19,13 @@ earningslens/
 ├── backend/
 │   ├── Dockerfile
 │   ├── requirements.txt
-│   ├── main.py                   # FastAPI app, CORS, lifespan
+│   ├── main.py                   # FastAPI app, CORS
 │   ├── database.py               # SQLAlchemy engine + session
-│   ├── models.py                 # ORM: Report, Watchlist, Subscription, QASession
+│   ├── models.py                 # ORM: Report, Watchlist, QASession
 │   ├── routers/
 │   │   ├── analyze.py            # POST /analyze/{ticker}
 │   │   ├── ask.py                # POST /ask/{ticker}
-│   │   ├── watchlist.py          # GET/POST/DELETE /watchlist
-│   │   └── schedule.py           # POST /schedule, GET /schedule
+│   │   └── watchlist.py          # GET/POST/DELETE /watchlist
 │   ├── services/
 │   │   ├── transcript.py         # Waterfall: EDGAR → scraper
 │   │   ├── edgar.py              # SEC EDGAR 8-K fetcher
@@ -38,9 +37,7 @@ earningslens/
 │   │   │   ├── analysts.py       # Finnhub consensus ratings
 │   │   │   └── aggregator.py     # asyncio.gather all three, return ExternalContext
 │   │   ├── analyst.py            # Claude API — composite report generation
-│   │   ├── qa.py                 # Claude API — multi-turn Q&A
-│   │   ├── email.py              # SendGrid delivery
-│   │   └── scheduler.py          # APScheduler cron logic
+│   │   └── qa.py                 # Claude API — multi-turn Q&A
 │   └── alembic/
 │       ├── env.py
 │       └── versions/
@@ -62,7 +59,6 @@ earningslens/
         │   ├── RiskList.jsx
         │   ├── ManagementTone.jsx
         │   ├── QABar.jsx
-        │   ├── EmailModal.jsx
         │   └── Toast.jsx
         ├── hooks/
         │   ├── useAnalysis.js
@@ -79,8 +75,6 @@ earningslens/
 # backend/.env (never commit — use .env.example)
 DATABASE_URL=postgresql://user:pass@localhost:5432/earningslens
 ANTHROPIC_API_KEY=sk-ant-...
-SENDGRID_API_KEY=SG....
-FROM_EMAIL=reports@earningslens.app
 EDGAR_USER_AGENT="EarningsLens yourname@email.com"   # required by SEC fair-use policy
 SCRAPER_DELAY_MS=1500                                  # politeness delay between scrape requests
 CORS_ORIGINS=http://localhost:3000,https://yourapp.up.railway.app
@@ -187,20 +181,6 @@ interface Metric {
   delta: string    // "+12% YoY"
   beat:  boolean
 }
-```
-
-### Subscription
-
-```python
-class Subscription(Base):
-    __tablename__ = "subscriptions"
-    id         = Column(UUID, primary_key=True)
-    email      = Column(String, nullable=False)
-    tickers    = Column(ARRAY(String))           # ["AAPL", "META"]
-    schedule   = Column(String)                  # "earnings_day" | "daily" | "weekly"
-    format     = Column(String)                  # "summary" | "full" | "bullets"
-    active     = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=utcnow)
 ```
 
 ---
@@ -412,36 +392,6 @@ async def generate_report(
     # 5. Retry once on parse failure with correction prompt
 ```
 
-### `email.py` — SendGrid delivery
-
-```python
-# Three formats:
-# "summary"  — signal badge + confidence + 3 highlights + link
-# "full"     — complete report as HTML email
-# "bullets"  — keyHighlights + watchlist + contradiction flags
-
-async def send_report_email(
-    to: str, report: ReportJSON,
-    fmt: Literal["summary", "full", "bullets"], app_url: str,
-) -> None: ...
-
-async def send_digest_email(
-    to: str, reports: list[ReportJSON], fmt: str,
-) -> None: ...
-```
-
-### `scheduler.py` — APScheduler cron
-
-```python
-# Jobs (all times ET):
-# "earnings_day" — daily 8 PM: check earnings calendar, analyze & email if earnings today
-# "daily"        — daily 7 AM: analyze all watched tickers, email if new transcript
-# "weekly"       — Monday 6 AM: compile watchlist digest for weekly subscribers
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-scheduler = AsyncIOScheduler(timezone="America/New_York")
-```
-
 ---
 
 ## API routes
@@ -455,9 +405,6 @@ scheduler = AsyncIOScheduler(timezone="America/New_York")
 | GET    | `/watchlist`               | List watched tickers |
 | POST   | `/watchlist/{ticker}`      | Add ticker |
 | DELETE | `/watchlist/{ticker}`      | Remove ticker |
-| POST   | `/schedule`                | Create/update email subscription |
-| GET    | `/schedule`                | Get subscription config |
-| DELETE | `/schedule`                | Cancel subscription |
 
 **Caching rule:** Check Postgres first on every `/analyze` call. If same ticker+quarter exists
 and is < 24h old, return cached report — no re-scrape, no Claude call, no signal fetch.
@@ -490,8 +437,9 @@ interface QAState {
 `src/api.js` is the only file that calls `fetch`. Exports:
 - `analyzeTickerApi(ticker)` → `ReportJSON`
 - `askQuestionApi(ticker, question, history)` → `string`
-- `saveSubscriptionApi(config)` → `void`
-- `getSubscriptionApi()` → `SubscriptionConfig | null`
+- `getWatchlistApi()` → `string[]`
+- `addWatchlistApi(ticker)` → `void`
+- `removeWatchlistApi(ticker)` → `void`
 
 **`<SignalBlock>`** is the new component that renders the composite signal. It receives the full
 `ReportJSON` and renders: signal badge, confidence bar, source breakdown row
@@ -502,9 +450,9 @@ interface QAState {
 ## Coding rules
 
 **Python**
-- Async everywhere — `httpx.AsyncClient`, APScheduler async
+- Async everywhere — `httpx.AsyncClient`
 - All external calls: try/except with typed errors (`TranscriptNotFoundError`, `ClaudeError`,
-  `RedditError`, `NewsError`, `AnalystError`, `EmailError`)
+  `RedditError`, `NewsError`, `AnalystError`)
 - No bare `except Exception` in service layer — catch, log, re-raise typed
 - Alembic for all schema changes. Never `create_all` in production.
 - `ruff` for linting, `black` for formatting
@@ -532,9 +480,8 @@ interface QAState {
 **Health checks:** Railway hits `/health` every 30s. Deploy fails if it doesn't return 200.
 
 **Env vars to set in Railway dashboard:**
-`DATABASE_URL` (auto), `ANTHROPIC_API_KEY`, `SENDGRID_API_KEY`, `FROM_EMAIL`,
-`EDGAR_USER_AGENT`, `CORS_ORIGINS`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`,
-`NEWSAPI_KEY`, `FINNHUB_KEY`
+`DATABASE_URL` (auto), `ANTHROPIC_API_KEY`, `EDGAR_USER_AGENT`, `CORS_ORIGINS`,
+`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `NEWSAPI_KEY`, `FINNHUB_KEY`
 
 ---
 
@@ -546,8 +493,7 @@ interface QAState {
 - Never let a single slow signal source (Reddit, NewsAPI) block report generation —
   all three run with `asyncio.gather` + 5s individual timeouts
 - Never let Reddit sentiment alone flip a signal — it adjusts confidence only
-- Never send email without checking `subscription.active == True`
 - Never skip `EDGAR_USER_AGENT` header — SEC will block the IP
 - Never use `print()` for logging — use `logging.getLogger(__name__)`
 - Never return HTTP 200 with an error payload — use proper status codes
-- Never store `ANTHROPIC_API_KEY`, `SENDGRID_API_KEY`, or any third-party key in the database
+- Never store `ANTHROPIC_API_KEY` or any third-party key in the database

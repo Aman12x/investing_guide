@@ -20,21 +20,6 @@ export async function askQuestionApi(ticker, question, history) {
   return data.answer;
 }
 
-export async function saveSubscriptionApi(config) {
-  const res = await fetch(`${BASE}/schedule`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(config),
-  });
-  if (!res.ok) throw new Error('Failed to save subscription');
-}
-
-export async function getSubscriptionApi() {
-  const res = await fetch(`${BASE}/schedule`);
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error('Failed to fetch subscription');
-  return res.json();
-}
 
 export async function getWatchlistApi() {
   const res = await fetch(`${BASE}/watchlist`);

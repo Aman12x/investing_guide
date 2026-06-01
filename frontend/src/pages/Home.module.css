@@ -34,22 +34,6 @@
   color: #9ca3af;
 }
 
-.emailBtn {
-  background: transparent;
-  border: 1px solid var(--gold);
-  border-radius: 4px;
-  color: var(--gold);
-  padding: 5px 14px;
-  font-size: 12px;
-  font-family: var(--font-mono);
-  transition: background 0.15s, color 0.15s;
-}
-
-.emailBtn:hover {
-  background: var(--gold);
-  color: var(--ink);
-}
-
 .body {
   flex: 1;
   display: flex;
