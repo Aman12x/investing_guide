@@ -1,0 +1,53 @@
+import logging
+import os
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from routers import analyze, ask, schedule, watchlist
+from services.scheduler import start_scheduler, stop_scheduler
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await start_scheduler()
+    logger.info("EarningsLens backend started")
+    yield
+    await stop_scheduler()
+    logger.info("EarningsLens backend stopped")
+
+
+app = FastAPI(title="EarningsLens", version="1.0.0", lifespan=lifespan)
+
+_cors_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(analyze.router)
+app.include_router(ask.router)
+app.include_router(watchlist.router)
+app.include_router(schedule.router)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal server error", "code": "INTERNAL_ERROR"},
+    )
