@@ -1,7 +1,9 @@
+import asyncio
 import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from functools import partial
 
 import feedparser
 import httpx
@@ -74,10 +76,11 @@ async def fetch_news_sentiment(ticker: str) -> NewsSignal | None:
             logger.warning("NewsAPI failed for %s: %s", ticker, exc)
 
     if not headlines:
-        # RSS fallback
+        # RSS fallback — feedparser.parse is synchronous; run off the event loop thread
+        loop = asyncio.get_event_loop()
         for source_name, feed_url in _RSS_FEEDS:
             try:
-                feed = feedparser.parse(feed_url)
+                feed = await loop.run_in_executor(None, partial(feedparser.parse, feed_url))
                 for entry in feed.entries[:20]:
                     title = entry.get("title", "")
                     if ticker.lower() in title.lower():

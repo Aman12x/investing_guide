@@ -15,7 +15,10 @@ export async function askQuestionApi(ticker, question, history) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question, history }),
   });
-  if (!res.ok) throw new Error('Q&A request failed');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `Q&A request failed (${res.status})`);
+  }
   const data = await res.json();
   return data.answer;
 }

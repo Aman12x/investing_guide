@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete, select
@@ -10,6 +11,18 @@ from models import Watchlist
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+_TICKER_RE = re.compile(r"^[A-Z0-9.]{1,10}$")
+
+
+def _validate_ticker(ticker: str) -> str:
+    t = ticker.upper().strip()
+    if not _TICKER_RE.match(t):
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "Invalid ticker symbol", "code": "INVALID_TICKER"},
+        )
+    return t
+
 
 @router.get("/watchlist")
 async def list_watchlist(db: AsyncSession = Depends(get_db)):
@@ -20,7 +33,7 @@ async def list_watchlist(db: AsyncSession = Depends(get_db)):
 
 @router.post("/watchlist/{ticker}", status_code=201)
 async def add_to_watchlist(ticker: str, db: AsyncSession = Depends(get_db)):
-    ticker = ticker.upper().strip()
+    ticker = _validate_ticker(ticker)
     existing = await db.execute(select(Watchlist).where(Watchlist.ticker == ticker))
     if existing.scalar_one_or_none():
         return {"ticker": ticker, "message": "already in watchlist"}
@@ -33,7 +46,7 @@ async def add_to_watchlist(ticker: str, db: AsyncSession = Depends(get_db)):
 
 @router.delete("/watchlist/{ticker}")
 async def remove_from_watchlist(ticker: str, db: AsyncSession = Depends(get_db)):
-    ticker = ticker.upper().strip()
+    ticker = _validate_ticker(ticker)
     result = await db.execute(delete(Watchlist).where(Watchlist.ticker == ticker))
     await db.commit()
     if result.rowcount == 0:

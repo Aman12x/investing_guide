@@ -1,8 +1,10 @@
 import logging
+import re
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
@@ -16,6 +18,17 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 _CACHE_TTL_HOURS = 24
+_TICKER_RE = re.compile(r"^[A-Z0-9.]{1,10}$")
+
+
+def _validate_ticker(ticker: str) -> str:
+    t = ticker.upper().strip()
+    if not _TICKER_RE.match(t):
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "Invalid ticker symbol", "code": "INVALID_TICKER"},
+        )
+    return t
 
 
 async def _get_cached(ticker: str, db: AsyncSession) -> Report | None:
@@ -31,7 +44,7 @@ async def _get_cached(ticker: str, db: AsyncSession) -> Report | None:
 
 @router.post("/analyze/{ticker}")
 async def analyze_ticker(ticker: str, db: AsyncSession = Depends(get_db)):
-    ticker = ticker.upper().strip()
+    ticker = _validate_ticker(ticker)
 
     cached = await _get_cached(ticker, db)
     if cached:
@@ -67,14 +80,22 @@ async def analyze_ticker(ticker: str, db: AsyncSession = Depends(get_db)):
         report_json=report.model_dump(),
     )
     db.add(db_report)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # Concurrent request already inserted this ticker+quarter — return what's there.
+        await db.rollback()
+        cached = await _get_cached(ticker, db)
+        if cached:
+            return cached.report_json
+        raise HTTPException(status_code=502, detail={"error": "Report storage conflict", "code": "STORAGE_CONFLICT"})
 
     return report.model_dump()
 
 
 @router.get("/analyze/{ticker}/latest")
 async def get_latest_report(ticker: str, db: AsyncSession = Depends(get_db)):
-    ticker = ticker.upper().strip()
+    ticker = _validate_ticker(ticker)
     cached = await _get_cached(ticker, db)
     if not cached:
         raise HTTPException(

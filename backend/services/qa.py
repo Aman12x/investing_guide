@@ -40,12 +40,18 @@ async def answer_question(
         },
     ]
 
+    # Enforce strict user/assistant alternation; messages already end with "assistant"
+    expected_role = "user"
     for turn in history:
         role = turn.get("role", "")
         content = turn.get("content", "")
-        if role in ("user", "assistant") and content:
+        if role == expected_role and content:
             messages.append({"role": role, "content": content})
+            expected_role = "assistant" if expected_role == "user" else "user"
 
+    # Final question must be from user; ensure last appended role isn't also user
+    if messages[-1]["role"] != "assistant":
+        messages.append({"role": "assistant", "content": "Go ahead."})
     messages.append({"role": "user", "content": question})
 
     try:
@@ -55,6 +61,8 @@ async def answer_question(
             system=_SYSTEM_PROMPT,
             messages=messages,
         )
+        if not response.content or not hasattr(response.content[0], "text"):
+            raise ClaudeError("Claude returned empty or non-text response")
         return response.content[0].text
     except anthropic.APIError as exc:
         raise ClaudeError(f"Claude QA failed: {exc}") from exc

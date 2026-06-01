@@ -113,6 +113,8 @@ async def generate_report(transcript: str, ticker: str, external: ExternalContex
         except anthropic.APIError as exc:
             raise ClaudeError(f"Claude API error: {exc}") from exc
 
+        if not response.content or not hasattr(response.content[0], "text"):
+            raise ClaudeError("Claude returned empty or non-text response")
         raw = response.content[0].text.strip()
 
         # Strip accidental markdown fences

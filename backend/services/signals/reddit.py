@@ -1,6 +1,7 @@
 import logging
 import os
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 
 import httpx
 
@@ -14,6 +15,9 @@ _SUBREDDITS = ["investing", "stocks", "wallstreetbets"]
 _LOOKBACK = "week"
 _MIN_SCORE = 10
 _LIMIT = 25
+
+# Module-level token cache — avoids re-fetching on every analyze call
+_token_cache: dict[str, object] = {"token": None, "expires_at": 0.0}
 
 
 @dataclass
@@ -38,6 +42,8 @@ def _score_title(title: str) -> int:
 
 
 async def _get_token(client: httpx.AsyncClient, client_id: str, secret: str) -> str:
+    if _token_cache["token"] and time.time() < float(_token_cache["expires_at"]):
+        return str(_token_cache["token"])
     resp = await client.post(
         _TOKEN_URL,
         data={"grant_type": "client_credentials"},
@@ -46,7 +52,10 @@ async def _get_token(client: httpx.AsyncClient, client_id: str, secret: str) -> 
         timeout=10.0,
     )
     resp.raise_for_status()
-    return resp.json()["access_token"]
+    data = resp.json()
+    _token_cache["token"] = data["access_token"]
+    _token_cache["expires_at"] = time.time() + data.get("expires_in", 3600) - 60
+    return str(_token_cache["token"])
 
 
 async def fetch_reddit_sentiment(ticker: str) -> RedditSignal | None:

@@ -12,6 +12,7 @@ export function useQA(currentTicker) {
   }, [currentTicker]);
 
   const ask = useCallback(async (question) => {
+    if (!currentTicker) return;
     setIsThinking(true);
     const newHistory = [...history, { role: 'user', content: question }];
     setHistory(newHistory);

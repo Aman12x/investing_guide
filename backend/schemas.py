@@ -73,15 +73,15 @@ class ReportJSON(BaseModel):
     @field_validator("keyHighlights")
     @classmethod
     def normalise_highlights(cls, v: list[str]) -> list[str]:
-        if not v:
-            raise ValueError("keyHighlights must not be empty")
+        if len(v) < 5:
+            raise ValueError(f"keyHighlights must have exactly 5 items, got {len(v)}")
         return v[:5]
 
     @field_validator("watchlist")
     @classmethod
     def normalise_watchlist(cls, v: list[str]) -> list[str]:
-        if not v:
-            raise ValueError("watchlist must not be empty")
+        if len(v) < 3:
+            raise ValueError(f"watchlist must have exactly 3 items, got {len(v)}")
         return v[:3]
 
 
