@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:wght@600;700&display=swap');
+
+:root {
+  --ink:        #0d0d0d;
+  --paper:      #f5f0e8;
+  --cream:      #ede8dd;
+  --gold:       #c4973a;
+  --gold-light: #e8c875;
+  --red:        #c0392b;
+  --green:      #1a6b45;
+  --muted:      #6b6456;
+  --border:     #d4cdc0;
+
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono:  'DM Mono', monospace;
+  --font-sans:  'DM Sans', sans-serif;
+
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  14px;
+  --space-lg:  22px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.report-enter    { animation: fadeUp 0.35s ease forwards; }
+.spinner         { animation: spin 0.85s linear infinite; }
+.loading-message { animation: pulse 1.6s ease-in-out infinite; }
+
+.bar-fill {
+  width: 0%;
+  transition: width 1.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
