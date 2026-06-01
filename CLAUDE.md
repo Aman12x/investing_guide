@@ -14,7 +14,6 @@ earningslens/
 ├── CLAUDE.md
 ├── docker-compose.yml
 ├── docker-compose.prod.yml
-├── .env.example
 ├── .gitignore
 ├── backend/
 │   ├── Dockerfile
@@ -72,7 +71,7 @@ earningslens/
 ## Environment variables
 
 ```bash
-# backend/.env (never commit — use .env.example)
+# backend/.env  ← lives here, never committed, no .env.example (permanently gitignored)
 DATABASE_URL=postgresql://user:pass@localhost:5432/earningslens
 ANTHROPIC_API_KEY=sk-ant-...
 EDGAR_USER_AGENT="EarningsLens yourname@email.com"   # required by SEC fair-use policy
@@ -91,6 +90,7 @@ VITE_API_URL=http://localhost:8000
 
 **Rules:**
 - Every secret is an env var. No hardcoded URLs, keys, or credentials anywhere in code.
+- Never create `.env.example` — it is permanently blocked in `.gitignore`. Document variables here instead.
 - Railway auto-injects `DATABASE_URL` — `database.py` must rewrite `postgres://` → `postgresql://`.
 - `EDGAR_USER_AGENT` is not optional. SEC will block requests without it.
 - All four signal source keys are optional — if absent, that source is skipped gracefully and
@@ -291,6 +291,7 @@ async def fetch_external_context(ticker: str) -> ExternalContext:
 ```python
 # Auth: OAuth2 client_credentials (no user login needed)
 # Token: POST https://www.reddit.com/api/v1/access_token
+#   Token is cached module-level with expiry — NOT re-fetched per call.
 # Search: GET https://oauth.reddit.com/r/{sub}/search
 #           ?q={ticker}&sort=top&t=week&limit=25&restrict_sr=true
 SUBREDDITS   = ["investing", "stocks", "wallstreetbets"]
@@ -318,6 +319,7 @@ class RedditSignal:
 #            &from={14_days_ago}&sortBy=relevancy&pageSize=10
 # Fallback (no key): Reuters RSS  https://feeds.reuters.com/reuters/businessNews
 #                    CNBC RSS     https://search.cnbc.com/rs/search/combinedcms/view.xml
+#   feedparser.parse() is synchronous — always call via run_in_executor, never directly.
 
 @dataclass
 class NewsSignal:
@@ -406,8 +408,13 @@ async def generate_report(
 | POST   | `/watchlist/{ticker}`      | Add ticker |
 | DELETE | `/watchlist/{ticker}`      | Remove ticker |
 
+**Ticker validation:** All `{ticker}` path parameters are validated against `^[A-Z0-9.]{1,10}$`
+before any service call. Invalid tickers return 422. Both `analyze.py` and `watchlist.py`
+use a shared `_validate_ticker()` helper — add the same check to any new ticker endpoint.
+
 **Caching rule:** Check Postgres first on every `/analyze` call. If same ticker+quarter exists
 and is < 24h old, return cached report — no re-scrape, no Claude call, no signal fetch.
+Concurrent duplicate inserts are handled via `IntegrityError` catch + rollback — do not remove.
 
 **Error responses:** `{"error": "human-readable message", "code": "SNAKE_CASE_CODE"}`.
 Never expose stack traces in production.
@@ -454,6 +461,8 @@ interface QAState {
 - All external calls: try/except with typed errors (`TranscriptNotFoundError`, `ClaudeError`,
   `RedditError`, `NewsError`, `AnalystError`)
 - No bare `except Exception` in service layer — catch, log, re-raise typed
+- Never call synchronous I/O inside an async function — use `asyncio.get_event_loop().run_in_executor()`
+- Always guard `response.content[0]` access: check `response.content` is non-empty and has a `.text` attribute before accessing
 - Alembic for all schema changes. Never `create_all` in production.
 - `ruff` for linting, `black` for formatting
 
@@ -497,3 +506,6 @@ interface QAState {
 - Never use `print()` for logging — use `logging.getLogger(__name__)`
 - Never return HTTP 200 with an error payload — use proper status codes
 - Never store `ANTHROPIC_API_KEY` or any third-party key in the database
+- Never create a `.env.example` file — it is permanently gitignored after a credential leak; document variables in CLAUDE.md instead
+- Never add a ticker endpoint without running it through `_validate_ticker()` first
+- Never call `feedparser.parse()` or any other synchronous network library directly in async code
