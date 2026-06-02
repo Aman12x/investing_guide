@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from agent.state import AgentState
 from schemas import ReportJSON
+from services.adjudication import adjudicate
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,8 @@ def formatter_node(state: AgentState) -> dict:
 
     if not report_dict:
         raise FormatterError("final_report", "no report produced by analyst/reflector")
+
+    report_dict = adjudicate(report_dict)
 
     try:
         validated = ReportJSON(**report_dict)

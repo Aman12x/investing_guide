@@ -6,6 +6,7 @@ import anthropic
 
 from exceptions import ClaudeError
 from schemas import ReportJSON
+from services.adjudication import adjudicate
 from services.signals.aggregator import ExternalContext, format_external_context
 
 logger = logging.getLogger(__name__)
@@ -126,6 +127,7 @@ async def generate_report(transcript: str, ticker: str, external: ExternalContex
 
         try:
             data = json.loads(raw)
+            data = adjudicate(data)
             return ReportJSON(**data)
         except (json.JSONDecodeError, ValueError) as exc:
             if attempt == 0:

@@ -293,3 +293,142 @@ async def test_raw_transcript_not_in_analyze_response(client):
 
     assert resp.status_code == 200
     assert "raw_transcript" not in resp.json()
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# /ask/{ticker} tests
+# ═════════════════════════════════════════════════════════════════════════════
+
+def _seed_report(ticker: str = "AAPL", quarter: str = "Q1 2025"):
+    """Return an unsaved Report ORM object ready to be inserted."""
+    from models import Report
+    return Report(
+        ticker=ticker,
+        company="Test Co",
+        quarter=quarter,
+        report_date=None,
+        transcript_source="fmp",
+        raw_transcript="operator earnings conference call " + "revenue grew. " * 100,
+        report_json=_valid_report(ticker, quarter),
+    )
+
+
+async def test_ask_404_when_no_report(client):
+    resp = await client.post("/ask/ZZZZ", json={"question": "What was revenue?"})
+    assert resp.status_code == 404
+    body = resp.json()
+    assert "error" in body
+    assert "code" in body
+
+
+async def test_ask_returns_answer(client, db_session):
+    db_session.add(_seed_report("AAPL"))
+    await db_session.commit()
+
+    with patch("routers.ask.answer_question", AsyncMock(return_value="Revenue was $124b.")):
+        resp = await client.post("/ask/AAPL", json={"question": "What was revenue?"})
+
+    assert resp.status_code == 200
+    assert resp.json()["answer"] == "Revenue was $124b."
+
+
+async def test_ask_passes_history_to_service(client, db_session):
+    db_session.add(_seed_report("IBM"))
+    await db_session.commit()
+
+    captured: list[dict] = []
+
+    async def _capture(**kwargs):
+        captured.append(kwargs)
+        return "answer"
+
+    with patch("routers.ask.answer_question", _capture):
+        await client.post(
+            "/ask/IBM",
+            json={
+                "question": "Follow-up question?",
+                "history": [
+                    {"role": "user", "content": "First question"},
+                    {"role": "assistant", "content": "First answer"},
+                ],
+            },
+        )
+
+    assert captured[0]["question"] == "Follow-up question?"
+    assert len(captured[0]["history"]) == 2
+
+
+async def test_ask_502_on_claude_error(client, db_session):
+    from exceptions import ClaudeError
+
+    db_session.add(_seed_report("TSLA"))
+    await db_session.commit()
+
+    with patch("routers.ask.answer_question", AsyncMock(side_effect=ClaudeError("timeout"))):
+        resp = await client.post("/ask/TSLA", json={"question": "Any question"})
+
+    assert resp.status_code == 502
+    body = resp.json()
+    assert body["code"] == "CLAUDE_ERROR"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# /watchlist tests
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def test_watchlist_empty_initially(client):
+    resp = await client.get("/watchlist")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+async def test_watchlist_add_returns_201(client):
+    resp = await client.post("/watchlist/MSFT")
+    assert resp.status_code == 201
+    assert resp.json()["ticker"] == "MSFT"
+
+
+async def test_watchlist_add_then_list(client):
+    await client.post("/watchlist/AMZN")
+    resp = await client.get("/watchlist")
+    tickers = [r["ticker"] for r in resp.json()]
+    assert "AMZN" in tickers
+
+
+async def test_watchlist_add_duplicate_is_idempotent(client):
+    await client.post("/watchlist/GOOG")
+    resp = await client.post("/watchlist/GOOG")
+    assert resp.status_code == 200  # already present — not 201, not error
+    assert resp.json()["ticker"] == "GOOG"
+
+
+async def test_watchlist_delete_removes_ticker(client):
+    await client.post("/watchlist/NFLX")
+    del_resp = await client.delete("/watchlist/NFLX")
+    assert del_resp.status_code == 200
+
+    list_resp = await client.get("/watchlist")
+    tickers = [r["ticker"] for r in list_resp.json()]
+    assert "NFLX" not in tickers
+
+
+async def test_watchlist_delete_404_when_not_present(client):
+    resp = await client.delete("/watchlist/NOTHERE")
+    assert resp.status_code == 404
+    body = resp.json()
+    assert "error" in body
+    assert body["code"] == "NOT_IN_WATCHLIST"
+
+
+async def test_watchlist_invalid_ticker_422(client):
+    resp = await client.post("/watchlist/invalid ticker")
+    assert resp.status_code == 422
+
+
+async def test_watchlist_response_includes_added_at(client):
+    await client.post("/watchlist/NVDA")
+    resp = await client.get("/watchlist")
+    items = resp.json()
+    nvda = next((r for r in items if r["ticker"] == "NVDA"), None)
+    assert nvda is not None
+    assert "added_at" in nvda
