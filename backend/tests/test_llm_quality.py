@@ -29,29 +29,48 @@ _JUDGE_PROMPT = """
 You are a strict financial analyst evaluator. Given an earnings call transcript excerpt and a
 ReportJSON produced by an AI analyst, evaluate the following four criteria and return a JSON object.
 
-Field semantics — read carefully before answering:
+Return a JSON object with exactly these four boolean fields. Read the rules below before deciding.
 
-1. "hallucination" — set to TRUE if every metric value and delta in the report is supported by
-   the transcript (verbatim or clear paraphrase). Set to FALSE only if a specific number or claim
-   is clearly invented and cannot be found or reasonably inferred from the transcript.
-   Terminology differences (e.g. "gross margin" vs "operating margin") are NOT hallucination unless
-   the numeric value itself is wrong. If the notes say "all metrics are accurate," return true.
+FIELD RULES — the value true always means PASS; false always means FAIL:
 
-2. "rationale_support" — set to TRUE if the signalRationale is grounded in evidence from the
-   transcript and does not contradict what management said. Set to FALSE if the rationale
-   explicitly contradicts a key fact (e.g., calls a self-acknowledged miss a beat).
+1. "hallucination":
+   PASS (true)  → every specific number in the report (revenue, EPS, margin %, deltas) appears
+                  verbatim or as a clear paraphrase in the transcript.
+   FAIL (false) → a specific number is clearly invented and cannot be found in the transcript.
+   Notes rule: begin your notes for this criterion with "metrics_check: PASS" or "metrics_check: FAIL"
+   — never write "Hallucination: FALSE" (that phrase is ambiguous and forbidden here).
+   Schema note: the report's "operatingMargin" field is a catch-all for whatever margin the
+   transcript discusses (gross margin, EBITDA, etc.). A field named "operatingMargin" containing
+   a gross-margin value is correct, not a hallucination.
 
-3. "sentiment_calibration" — set to TRUE if sentiment.overall (0–100) matches the transcript tone.
-   Scores above 75 require a clearly bullish transcript; below 40 require a clearly cautious one.
+2. "rationale_support":
+   PASS (true)  → signalRationale is grounded in evidence and does not contradict what management said.
+   FAIL (false) → the rationale explicitly contradicts a key stated fact (e.g., calls an
+                  acknowledged miss a beat, or ignores the dominant tone of the call).
+   Notes rule: begin with "rationale_check: PASS" or "rationale_check: FAIL".
 
-4. "contradiction_accuracy" — set to TRUE if every item in contradictions[] is real and accurately
-   described based on the transcript. Set to TRUE also when contradictions[] is empty and that is
-   appropriate.
+3. "sentiment_calibration":
+   PASS (true)  → sentiment.overall matches the transcript tone within these bands:
+                  80–100: transcript is unambiguously euphoric / record-breaking positive
+                  60–79:  transcript is clearly positive / beat with minor concerns
+                  40–59:  transcript is neutral, mixed, or in-line with measured tone
+                  20–39:  transcript is cautious, guidance cut, or management flagged headwinds
+                  0–19:   transcript is clearly negative / significant miss or crisis
+                  Any score that lands in the correct band for the transcript's tone is a PASS.
+                  Once you determine the score is in the right band, return PASS — do NOT
+                  fail it because you prefer a different number within the same band.
+                  Example: if you think 88–92 is ideal and the score is 94, but the transcript
+                  is record-breaking positive (80–100 band), return PASS. Only fail if the
+                  score is in an entirely wrong band.
+   FAIL (false) → score is in a completely wrong band (e.g., 75 for a clearly negative transcript).
+   Notes rule: begin with "sentiment_check: PASS" or "sentiment_check: FAIL".
 
-Schema note: the "operatingMargin" field in the report is a catch-all for the primary margin metric
-the transcript discusses (gross margin, operating margin, EBITDA margin, etc.). The analyst correctly
-reports whatever margin metric is available. Do NOT flag a mismatch between the field name
-"operatingMargin" and a reported value of "gross margin" as hallucination — they are the same slot.
+4. "contradiction_accuracy":
+   PASS (true)  → every item in contradictions[] is a genuine contradiction between statements
+                  in the transcript, OR the array is empty and that is appropriate.
+   FAIL (false) → an item in contradictions[] is a mischaracterization, a forward-looking risk,
+                  or describes normal business practice (e.g., capital returned > single-quarter OCF).
+   Notes rule: begin with "contradiction_check: PASS" or "contradiction_check: FAIL".
 
 Return ONLY valid JSON with no markdown fences:
 {"hallucination": true|false, "rationale_support": true|false, "sentiment_calibration": true|false, "contradiction_accuracy": true|false, "notes": "brief explanation"}
@@ -76,16 +95,27 @@ async def _judge(transcript: str, report: ReportJSON) -> dict:
         f"=== TRANSCRIPT EXCERPT ===\n{transcript[:8000]}\n=== END ===\n\n"
         f"=== REPORT JSON ===\n{json.dumps(report.model_dump(), indent=2)}\n=== END ==="
     )
-    resp = await client.messages.create(
-        model="claude-haiku-4-5-20251001",  # cheaper judge
-        max_tokens=512,
-        system=_JUDGE_PROMPT,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    raw = resp.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1].lstrip("json").strip()
-    return json.loads(raw)
+    messages = [{"role": "user", "content": user_msg}]
+    last_err: Exception | None = None
+    for _ in range(3):
+        resp = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1024,
+            system=_JUDGE_PROMPT,
+            messages=messages,
+        )
+        raw = resp.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1].lstrip("json").strip()
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            last_err = exc
+            messages = messages + [
+                {"role": "assistant", "content": raw},
+                {"role": "user", "content": "Your response was not valid JSON. Return ONLY the JSON object, no other text."},
+            ]
+    raise RuntimeError(f"Judge returned invalid JSON after retries: {last_err}")
 
 
 def _save_baseline(name: str, grades: dict) -> None:

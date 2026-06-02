@@ -87,7 +87,7 @@ def format_external_context(ticker: str, context: ExternalContext) -> str:
         lines.append("")
 
     if not context.news and not context.analysts and not context.reddit:
-        lines.append("(No external signals available — base report on transcript only. signalConfidence must be <= 70.)")
+        lines.append("(No external signals available — base report on transcript only. Calibrate signalConfidence solely on transcript quality per the calibration rules in the system prompt.)")
 
     return "\n".join(lines)
 

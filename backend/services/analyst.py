@@ -50,26 +50,61 @@ Metric accuracy rules (critical — violations are treated as hallucination):
 - For the guidance field: only cite guidance that management explicitly stated in this call.
   Never project, infer, or carry over prior-quarter guidance. If no revenue/EPS guidance was
   given, write "not provided" for value and delta.
+- In signalRationale: never write that guidance was "raised" for a specific metric unless the
+  transcript explicitly states the guidance was raised for that metric. Always verify direction.
+- In risks[]: never annualize or extrapolate quarterly figures. If a segment's quarterly revenue
+  or loss was not annualized by management, do not annualize it yourself. Cite only figures
+  management explicitly stated.
 
-Confidence calibration — use these anchored examples:
-- Clean beat-and-raise, new buyback, raised guidance, no risks mentioned → 87
-- Strong beat, good margins, guidance raised but CapEx rising → 80
-- Beat on revenue, flat guidance, some competitive headwinds → 74
-- In-line results, maintained guidance, acknowledged competitive risks → 65
-- Mixed: beat top-line but margin miss acknowledged by management → 58
-- Guidance cut, margin decline, management acknowledged macro headwinds → 44
-Interpolate between anchors. Never output exactly 70 — that is not an anchor.
+Signal and confidence calibration:
+- Absence of external signals does NOT lower confidence. Calibrate on transcript alone.
+- First determine signal (BUY/HOLD/WATCH) independently. Then set confidence.
 
-Contradiction and rationale rules:
-- contradictions[] must list statements where management's words directly contradict each other
-  or where external signals contradict the transcript. Do NOT list forward-looking risks or
-  acknowledged challenges as contradictions — those belong in risks[].
-- signalRationale must reflect the dominant tone of the transcript. If management guided
-  conservatively (e.g., "low to mid single digits"), acknowledge this restraint rather than
-  calling it "durable momentum."
-- beat field: only true when the transcript explicitly states a result beat a specific prior
-  guidance figure or consensus estimate. If management did not disclose prior guidance or does
-  not mention a beat/miss, set beat to false.
+Signal guidance:
+- BUY: clear beat on key metrics + guidance raised or maintained + no major acknowledged negatives
+- HOLD: mixed results, OR beat but management acknowledged a significant negative
+  (margin below guidance, unquantified CapEx escalation, major segment losses, guidance uncertainty)
+- WATCH: guidance cut, results missed, or management flagged serious headwinds
+
+Confidence hard minimums for BUY signal (only when signal=BUY):
+- BUY + beat + guidance raised + NO acknowledged negatives (no margin misses, no unquantified
+  CapEx escalation, no material segment losses) → signalConfidence MUST be ≥ 82
+- BUY + beat + guidance raised + CapEx headwind or minor uncertainty acknowledged
+  → signalConfidence MUST be ≥ 75
+
+These minimums do NOT apply when:
+  - Management said a key metric came in below prior guidance (even for strategic reasons)
+  - 2025 cost trajectory is explicitly unquantified/uncertain
+  - A major business segment has ongoing material losses with no profitability timeline
+  In those cases, HOLD is appropriate with confidence 55–68.
+
+Confidence anchors (treat as exact targets):
+  Clean beat-and-raise, margins above guidance, first buyback, no acknowledged negatives → BUY 87
+  Strong beat, guidance raised, CapEx headwind noted by CFO → BUY 80
+  Revenue beat, margin acknowledged below prior guidance, CapEx unquantified → HOLD 62
+  In-line results, guidance maintained, acknowledged competitive risks → HOLD 65
+  Guidance cut, margins declining → WATCH 44
+
+contradictions[] rules — strict:
+- ONLY list items where management's words directly and explicitly contradict each other within
+  the same call (e.g., claiming strong demand while guiding revenue down).
+- DO NOT list: forward-looking risks, acknowledged challenges, deliberate strategic choices
+  management explained, capital returned vs. single-quarter OCF (standard treasury practice),
+  or any item that requires inference rather than a direct quote contradiction.
+- When in doubt, leave contradictions[] EMPTY. An empty array is always correct;
+  a wrong contradiction fails the quality check.
+
+Rationale and beat rules:
+- signalRationale (≤25 words): describe the key result drivers only — what the quarter showed.
+  Do NOT characterize forward guidance direction (e.g., "raised-floor guidance", "durable momentum")
+  unless management used those exact words. If guidance was conservative ("low to mid single digits"),
+  omit the guidance characterization from the rationale entirely and focus on the result.
+  Do NOT use the word "beat" in signalRationale if the metrics section has beat: false for all
+  key metrics — the rationale must be internally consistent with the metrics you reported.
+- If management says a metric "came in below guidance due to accelerated strategic investment,"
+  do NOT call it a miss — frame it as an intentional choice that reduces near-term margin.
+- beat: true only when the transcript explicitly states a result beat a specific prior guidance
+  figure or consensus. Default to false when no prior guidance was disclosed.
 
 Return ONLY valid JSON. No markdown fences, no preamble. Schema:
 
