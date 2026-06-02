@@ -27,6 +27,16 @@ earningslens/
 │   │   ├── analyze.py            # POST /analyze/{ticker}
 │   │   ├── ask.py                # POST /ask/{ticker}
 │   │   └── watchlist.py          # GET/POST/DELETE /watchlist
+│   ├── agent/
+│   │   ├── state.py              # AgentState dataclass — shared across all nodes
+│   │   ├── graph.py              # LangGraph StateGraph wiring; exports agent = build_graph()
+│   │   └── nodes/
+│   │       ├── planner.py        # Claude call — tool priorities, weight overrides
+│   │       ├── tools.py          # fetch_node: wraps all services with 5s timeouts
+│   │       ├── sufficiency.py    # Pure logic — routes "proceed" or "fetch_more"
+│   │       ├── analyst.py        # Claude call — draft ReportJSON from transcript + signals
+│   │       ├── reflector.py      # Claude call — skeptical review, produces final_report
+│   │       └── formatter.py      # Pure Python — validates against ReportJSON schema
 │   ├── services/
 │   │   ├── transcript.py         # Waterfall: EDGAR → FMP → scraper
 │   │   ├── models.py             # TranscriptResult dataclass (shared to avoid circular imports)
@@ -138,6 +148,25 @@ VITE_API_URL=http://localhost:8001   # 8000 is used by Docker Desktop on Mac; us
 ---
 
 ## Core data contracts
+
+### AgentState (LangGraph)
+
+```python
+@dataclass
+class AgentState:
+    ticker: str
+    user_intent: str                        # raw request from user
+    plan: dict                              # planner output — tool priorities, weight overrides
+    transcript: Any                         # TranscriptResult | None
+    signals: dict                           # {reddit, news, analysts, market} — any can be None
+    draft_report: dict                      # first ReportJSON attempt (analyst node)
+    final_report: dict                      # after reflector review; validated by formatter
+    reflection_notes: str                   # what the reflector changed and why
+    iterations: int = 0                     # sufficiency check loop counter
+    sufficient: bool = False                # did we get enough data to generate?
+    errors: list[str] = field(default_factory=list)
+    formatter_attempts: int = 0             # tracks formatter retry; max 1 retry allowed
+```
 
 ### Report (Postgres)
 
@@ -455,7 +484,7 @@ async def generate_report(
 | Method | Path | Description |
 |--------|------|-------------|
 | GET    | `/health`                  | `{"status":"ok"}` |
-| POST   | `/analyze/{ticker}`        | Transcript + signals → composite report → cache |
+| POST   | `/analyze/{ticker}`        | Runs LangGraph agent — planner → fetch → sufficiency → analyst → reflector → formatter |
 | GET    | `/analyze/{ticker}/latest` | Return cached report if < 24h old |
 | POST   | `/ask/{ticker}`            | `{question, history}` → Claude Q&A answer |
 | GET    | `/watchlist`               | List watched tickers |
@@ -568,3 +597,6 @@ interface QAState {
   since filenames vary wildly (e.g. `d729501dex991.htm`)
 - Never import `TranscriptResult` from `services.transcript` — import from `services.models` to
   avoid the circular import between transcript.py ↔ edgar.py ↔ scraper.py
+- Never call agent nodes directly from routers — always go through `agent.ainvoke`
+- Never let the sufficiency loop run more than 3 iterations — enforce `state.iterations < 3` hard cap
+- `langgraph` and `langchain-anthropic` are in requirements.txt; do not remove them

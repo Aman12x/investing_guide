@@ -7,12 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from agent.graph import agent
+from agent.nodes.formatter import FormatterError
+from agent.state import AgentState
 from database import get_db
-from exceptions import ClaudeError, TranscriptNotFoundError
 from models import Report
-from services.analyst import generate_report
-from services.signals.aggregator import fetch_external_context
-from services.transcript import fetch_transcript
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -43,7 +42,11 @@ async def _get_cached(ticker: str, db: AsyncSession) -> Report | None:
 
 
 @router.post("/analyze/{ticker}")
-async def analyze_ticker(ticker: str, db: AsyncSession = Depends(get_db)):
+async def analyze_ticker(
+    ticker: str,
+    intent: str = "full analysis",
+    db: AsyncSession = Depends(get_db),
+):
     ticker = _validate_ticker(ticker)
 
     cached = await _get_cached(ticker, db)
@@ -51,33 +54,54 @@ async def analyze_ticker(ticker: str, db: AsyncSession = Depends(get_db)):
         logger.info("Cache hit for %s", ticker)
         return cached.report_json
 
-    try:
-        transcript_result = await fetch_transcript(ticker)
-    except TranscriptNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail={"error": f"No earnings transcript found for {ticker}", "code": "TRANSCRIPT_NOT_FOUND"},
-        )
+    initial_state = AgentState(
+        ticker=ticker,
+        user_intent=intent,
+        plan={},
+        transcript=None,
+        signals={},
+        draft_report={},
+        final_report={},
+        reflection_notes="",
+    )
 
-    external = await fetch_external_context(ticker)
-
     try:
-        report = await generate_report(transcript_result.text, ticker, external)
-    except ClaudeError as exc:
-        logger.error("Claude report generation failed for %s: %s", ticker, exc)
+        final_state = await agent.ainvoke(initial_state)
+    except FormatterError as exc:
+        logger.error("Formatter validation failed for %s: %s", ticker, exc)
         raise HTTPException(
             status_code=502,
-            detail={"error": "Report generation failed", "code": "CLAUDE_ERROR"},
+            detail={"error": str(exc), "code": "FORMATTER_ERROR"},
+        )
+    except Exception as exc:
+        logger.error("Agent failed for %s: %s", ticker, exc)
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "Agent failed to produce a report", "code": "AGENT_ERROR"},
+        )
+
+    # ainvoke returns either the state dataclass or a dict depending on LangGraph version
+    if isinstance(final_state, dict):
+        final_report = final_state.get("final_report", {})
+        transcript = final_state.get("transcript")
+    else:
+        final_report = getattr(final_state, "final_report", {})
+        transcript = getattr(final_state, "transcript", None)
+
+    if not final_report:
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "Agent failed to produce a report", "code": "AGENT_ERROR"},
         )
 
     db_report = Report(
         ticker=ticker,
-        company=report.company,
-        quarter=report.quarter,
-        report_date=transcript_result.report_date,
-        transcript_source=transcript_result.source,
-        raw_transcript=transcript_result.text,
-        report_json=report.model_dump(),
+        company=final_report.get("company", ticker),
+        quarter=final_report.get("quarter", "Unknown"),
+        report_date=transcript.report_date if transcript and hasattr(transcript, "report_date") else None,
+        transcript_source=transcript.source if transcript and hasattr(transcript, "source") else "unknown",
+        raw_transcript=transcript.text if transcript and hasattr(transcript, "text") else "",
+        report_json=final_report,
     )
     db.add(db_report)
     try:
@@ -88,9 +112,12 @@ async def analyze_ticker(ticker: str, db: AsyncSession = Depends(get_db)):
         cached = await _get_cached(ticker, db)
         if cached:
             return cached.report_json
-        raise HTTPException(status_code=502, detail={"error": "Report storage conflict", "code": "STORAGE_CONFLICT"})
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "Report storage conflict", "code": "STORAGE_CONFLICT"},
+        )
 
-    return report.model_dump()
+    return final_report
 
 
 @router.get("/analyze/{ticker}/latest")
