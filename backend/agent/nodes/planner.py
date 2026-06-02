@@ -2,9 +2,8 @@ import json
 import logging
 import os
 
-import anthropic
-
 from agent.state import AgentState
+from observability import make_anthropic_client, observe, update_trace
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +37,10 @@ _DEFAULT_PLAN = {
 }
 
 
+@observe(name="planner")
 async def planner_node(state: AgentState) -> dict:
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    update_trace(user_id=state.ticker, session_id=state.ticker, input={"ticker": state.ticker})
+    client = make_anthropic_client()
     user_msg = f"Ticker: {state.ticker}\nUser intent: {state.user_intent}"
 
     try:

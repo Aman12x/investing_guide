@@ -205,7 +205,7 @@ async def test_planner_error_falls_back_to_default_plan():
     mock_client = MagicMock()
     mock_client.messages.create = AsyncMock(side_effect=Exception("API unavailable"))
 
-    with patch("agent.nodes.planner.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.planner.make_anthropic_client", return_value=mock_client):
         with patch("agent.nodes.tools.fetch_transcript", AsyncMock(return_value=_mock_transcript())):
             with patch("agent.nodes.tools.fetch_reddit_sentiment", AsyncMock(return_value=None)):
                 with patch("agent.nodes.tools.fetch_news_sentiment", AsyncMock(return_value=None)):

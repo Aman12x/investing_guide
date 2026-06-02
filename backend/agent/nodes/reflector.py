@@ -2,9 +2,8 @@ import json
 import logging
 import os
 
-import anthropic
-
 from agent.state import AgentState
+from observability import make_anthropic_client, observe, update_trace
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +31,13 @@ Either way, return a JSON object:
 """.strip()
 
 
+@observe(name="reflector")
 async def reflector_node(state: AgentState) -> dict:
     ticker = state.ticker if hasattr(state, "ticker") else state.get("ticker", "")
     draft_report = state.draft_report if hasattr(state, "draft_report") else state.get("draft_report", {})
     transcript = state.transcript if hasattr(state, "transcript") else state.get("transcript")
     errors = list(state.errors if hasattr(state, "errors") else state.get("errors", []))
+    update_trace(user_id=ticker, session_id=ticker)
 
     if not draft_report:
         logger.warning("Reflector: no draft report for %s — skipping", ticker)
@@ -58,7 +59,7 @@ async def reflector_node(state: AgentState) -> dict:
         f"Review the draft against the transcript and return your reflection JSON."
     )
 
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    client = make_anthropic_client()
 
     try:
         response = await client.messages.create(

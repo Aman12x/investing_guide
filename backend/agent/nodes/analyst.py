@@ -2,9 +2,8 @@ import json
 import logging
 import os
 
-import anthropic
-
 from agent.state import AgentState
+from observability import make_anthropic_client, observe, update_trace
 from services.analyst import _SYSTEM_PROMPT
 from services.signals.aggregator import ExternalContext, format_external_context
 
@@ -64,15 +63,17 @@ def _build_message(state: AgentState) -> str:
     )
 
 
+@observe(name="analyst")
 async def analyst_node(state: AgentState) -> dict:
     ticker = state.ticker if hasattr(state, "ticker") else state.get("ticker", "")
     errors = list(state.errors if hasattr(state, "errors") else state.get("errors", []))
     transcript = state.transcript if hasattr(state, "transcript") else state.get("transcript")
+    update_trace(user_id=ticker, session_id=ticker)
 
     if transcript is None:
         errors.append("analyst_node: no transcript available — report based on signals only")
 
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    client = make_anthropic_client()
     messages = [{"role": "user", "content": _build_message(state)}]
 
     for attempt in range(2):

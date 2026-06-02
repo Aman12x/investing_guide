@@ -43,7 +43,7 @@ async def test_planner_returns_valid_plan():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(VALID_PLAN)))
 
-    with patch("agent.nodes.planner.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.planner.make_anthropic_client", return_value=mock_client):
         result = await planner_node(_state("NVDA"))
 
     assert result["plan"]["tool_priority"][0] == "transcript"
@@ -57,7 +57,7 @@ async def test_planner_strips_markdown_fences():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=_mock_response(fenced))
 
-    with patch("agent.nodes.planner.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.planner.make_anthropic_client", return_value=mock_client):
         result = await planner_node(_state("NVDA"))
 
     assert result["plan"]["rationale"] == VALID_PLAN["rationale"]
@@ -68,7 +68,7 @@ async def test_planner_falls_back_to_default_on_api_error():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(side_effect=Exception("network error"))
 
-    with patch("agent.nodes.planner.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.planner.make_anthropic_client", return_value=mock_client):
         result = await planner_node(_state("GME"))
 
     assert result["plan"] == _DEFAULT_PLAN
@@ -79,7 +79,7 @@ async def test_planner_falls_back_on_invalid_json():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=_mock_response("not json at all"))
 
-    with patch("agent.nodes.planner.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.planner.make_anthropic_client", return_value=mock_client):
         result = await planner_node(_state("AMC"))
 
     assert result["plan"] == _DEFAULT_PLAN
@@ -92,7 +92,7 @@ async def test_planner_falls_back_on_empty_response():
     empty_response.content = []
     mock_client.messages.create = AsyncMock(return_value=empty_response)
 
-    with patch("agent.nodes.planner.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.planner.make_anthropic_client", return_value=mock_client):
         result = await planner_node(_state("TSLA"))
 
     assert result["plan"] == _DEFAULT_PLAN

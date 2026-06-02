@@ -1,9 +1,8 @@
 import logging
 import os
 
-import anthropic
-
 from exceptions import ClaudeError
+from observability import make_anthropic_client, observe, update_trace
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +17,15 @@ _SYSTEM_PROMPT = (
 )
 
 
+@observe(name="answer_question")
 async def answer_question(
     ticker: str,
     transcript: str,
     question: str,
     history: list[dict],
 ) -> str:
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    update_trace(user_id=ticker, session_id=ticker, input={"ticker": ticker, "question": question})
+    client = make_anthropic_client()
 
     truncated = transcript[:_MAX_TRANSCRIPT_CHARS]
 

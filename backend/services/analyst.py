@@ -2,9 +2,8 @@ import json
 import logging
 import os
 
-import anthropic
-
 from exceptions import ClaudeError
+from observability import make_anthropic_client, observe, update_trace
 from schemas import ReportJSON
 from services.adjudication import adjudicate
 from services.signals.aggregator import ExternalContext, format_external_context
@@ -98,8 +97,10 @@ def _build_user_message(transcript: str, ticker: str, external: ExternalContext)
     )
 
 
+@observe(name="generate_report")
 async def generate_report(transcript: str, ticker: str, external: ExternalContext) -> ReportJSON:
-    client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    update_trace(user_id=ticker, session_id=ticker, input={"ticker": ticker})
+    client = make_anthropic_client()
     user_msg = _build_user_message(transcript, ticker, external)
     messages = [{"role": "user", "content": user_msg}]
 

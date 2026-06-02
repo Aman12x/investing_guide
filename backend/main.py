@@ -5,11 +5,13 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+import observability
 from routers import analyze, ask, watchlist
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
+observability.setup()
 
 app = FastAPI(title="EarningsLens", version="1.0.0")
 

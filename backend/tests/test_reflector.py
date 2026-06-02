@@ -46,7 +46,7 @@ async def test_reflector_accepts_unchanged_draft():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=_mock_response(payload))
 
-    with patch("agent.nodes.reflector.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.reflector.make_anthropic_client", return_value=mock_client):
         result = await reflector_node(_state(draft_report=DRAFT, transcript=_mock_transcript()))
 
     assert result["final_report"] == DRAFT
@@ -59,7 +59,7 @@ async def test_reflector_returns_revised_report():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=_mock_response(payload))
 
-    with patch("agent.nodes.reflector.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.reflector.make_anthropic_client", return_value=mock_client):
         result = await reflector_node(_state(draft_report=DRAFT, transcript=_mock_transcript()))
 
     assert result["final_report"]["signal"] == "HOLD"
@@ -71,7 +71,7 @@ async def test_reflector_falls_back_to_draft_on_api_error():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(side_effect=Exception("timeout"))
 
-    with patch("agent.nodes.reflector.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.reflector.make_anthropic_client", return_value=mock_client):
         result = await reflector_node(_state(draft_report=DRAFT, transcript=_mock_transcript()))
 
     assert result["final_report"] == DRAFT
@@ -92,7 +92,7 @@ async def test_reflector_handles_missing_transcript():
     mock_client = AsyncMock()
     mock_client.messages.create = AsyncMock(return_value=_mock_response(payload))
 
-    with patch("agent.nodes.reflector.anthropic.AsyncAnthropic", return_value=mock_client):
+    with patch("agent.nodes.reflector.make_anthropic_client", return_value=mock_client):
         # transcript=None should not crash the node
         result = await reflector_node(_state(draft_report=DRAFT, transcript=None))
 

@@ -12,6 +12,7 @@ from agent.nodes.formatter import FormatterError
 from agent.state import AgentState
 from database import get_db
 from models import Report
+from observability import observe, update_trace
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ async def analyze_ticker(
     )
 
     try:
-        final_state = await agent.ainvoke(initial_state)
+        final_state = await _invoke_agent(initial_state)
     except FormatterError as exc:
         logger.error("Formatter validation failed for %s: %s", ticker, exc)
         raise HTTPException(
@@ -118,6 +119,18 @@ async def analyze_ticker(
         )
 
     return final_report
+
+
+@observe(name="agent_run")
+async def _invoke_agent(state: AgentState):
+    """Thin wrapper so the entire LangGraph execution is one Langfuse trace."""
+    update_trace(
+        name=f"analyze/{state.ticker}",
+        user_id=state.ticker,
+        session_id=state.ticker,
+        input={"ticker": state.ticker, "intent": state.user_intent},
+    )
+    return await agent.ainvoke(state)
 
 
 @router.get("/analyze/{ticker}/latest")

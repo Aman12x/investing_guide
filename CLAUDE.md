@@ -132,6 +132,11 @@ REDDIT_CLIENT_SECRET=...
 NEWSAPI_KEY=...                                        # newsapi.org free tier = 100 req/day
 FINNHUB_KEY=...                                        # free tier = 60 req/min
 
+# Observability (optional — backend is fully functional without these)
+LANGFUSE_PUBLIC_KEY=pk-lf-...                          # langfuse.com free tier
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com               # default; omit for cloud, set for self-hosted
+
 # frontend/.env
 VITE_API_URL=http://localhost:8001   # 8000 is used by Docker Desktop on Mac; use 8001 locally
 ```
@@ -144,6 +149,8 @@ VITE_API_URL=http://localhost:8001   # 8000 is used by Docker Desktop on Mac; us
 - `FMP_KEY` is optional — if absent, FMP source is skipped. EDGAR still runs first.
 - All signal source keys (Reddit, NewsAPI, Finnhub) are optional — if absent, that source is
   skipped gracefully and confidence is recalculated across remaining sources.
+- Langfuse keys are optional — if absent, `observability.setup()` is a no-op and all
+  `@observe()` decorators on nodes/services are no-ops. Never guard Claude calls on Langfuse.
 
 ---
 
