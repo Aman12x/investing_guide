@@ -26,9 +26,11 @@ earningslens/
 │   │   ├── ask.py                # POST /ask/{ticker}
 │   │   └── watchlist.py          # GET/POST/DELETE /watchlist
 │   ├── services/
-│   │   ├── transcript.py         # Waterfall: EDGAR → scraper
-│   │   ├── edgar.py              # SEC EDGAR 8-K fetcher
-│   │   ├── scraper.py            # Motley Fool fallback
+│   │   ├── transcript.py         # Waterfall: EDGAR → FMP → scraper
+│   │   ├── models.py             # TranscriptResult dataclass (shared to avoid circular imports)
+│   │   ├── edgar.py              # SEC EDGAR 8-K fetcher (works for companies that file transcripts)
+│   │   ├── fmp_transcript.py     # Financial Modeling Prep API — primary fallback
+│   │   ├── scraper.py            # Last-resort scraper fallback
 │   │   ├── signals/
 │   │   │   ├── __init__.py
 │   │   │   ├── reddit.py         # Reddit OAuth → sentiment summary
@@ -76,7 +78,12 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/earningslens
 ANTHROPIC_API_KEY=sk-ant-...
 EDGAR_USER_AGENT="EarningsLens yourname@email.com"   # required by SEC fair-use policy
 SCRAPER_DELAY_MS=1500                                  # politeness delay between scrape requests
-CORS_ORIGINS=http://localhost:3000,https://yourapp.up.railway.app
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173,https://yourapp.up.railway.app
+
+# Transcript source
+FMP_KEY=...          # financialmodelingprep.com — free tier 250 req/day; covers all S&P 500+
+                     # optional but required for major tickers (AAPL, MSFT, etc.) that don't
+                     # file transcripts with EDGAR
 
 # External signal sources
 REDDIT_CLIENT_ID=...
@@ -85,7 +92,7 @@ NEWSAPI_KEY=...                                        # newsapi.org free tier =
 FINNHUB_KEY=...                                        # free tier = 60 req/min
 
 # frontend/.env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8001   # 8000 is used by Docker Desktop on Mac; use 8001 locally
 ```
 
 **Rules:**
@@ -93,8 +100,9 @@ VITE_API_URL=http://localhost:8000
 - Never create `.env.example` — it is permanently blocked in `.gitignore`. Document variables here instead.
 - Railway auto-injects `DATABASE_URL` — `database.py` must rewrite `postgres://` → `postgresql://`.
 - `EDGAR_USER_AGENT` is not optional. SEC will block requests without it.
-- All four signal source keys are optional — if absent, that source is skipped gracefully and
-  confidence is recalculated across remaining sources.
+- `FMP_KEY` is optional — if absent, FMP source is skipped. EDGAR still runs first.
+- All signal source keys (Reddit, NewsAPI, Finnhub) are optional — if absent, that source is
+  skipped gracefully and confidence is recalculated across remaining sources.
 
 ---
 
@@ -110,7 +118,7 @@ class Report(Base):
     company           = Column(String, nullable=False)
     quarter           = Column(String(20))            # "Q1 2025"
     report_date       = Column(Date)
-    transcript_source = Column(String)                # "edgar" | "motley_fool"
+    transcript_source = Column(String)                # "edgar" | "fmp" | "stockanalysis"
     raw_transcript    = Column(Text)                  # never sent to frontend
     report_json       = Column(JSONB, nullable=False) # full ReportJSON
     created_at        = Column(DateTime, default=utcnow)
@@ -187,57 +195,72 @@ interface Metric {
 
 ## Service contracts
 
-### `transcript.py` — waterfall fetcher
+### `models.py` — shared dataclass
 
 ```python
-async def fetch_transcript(ticker: str) -> TranscriptResult:
-    """Try sources in order. Return on first success (min 2000 chars)."""
-    for source_fn in [fetch_from_edgar, fetch_from_motley_fool]:
-        try:
-            result = await source_fn(ticker)
-            if result and len(result.text) > 2000:
-                return result
-        except Exception:
-            continue
-    raise TranscriptNotFoundError(ticker)
-
+# TranscriptResult lives here (not in transcript.py) to avoid circular imports.
+# edgar.py and scraper.py both import it from services.models.
 @dataclass
 class TranscriptResult:
     ticker:      str
     text:        str
-    source:      str           # "edgar" | "motley_fool"
+    source:      str           # "edgar" | "fmp" | "stockanalysis"
     quarter:     str | None
     report_date: date | None
+```
+
+### `transcript.py` — waterfall fetcher
+
+```python
+async def fetch_transcript(ticker: str) -> TranscriptResult:
+    """Waterfall: EDGAR → FMP → scraper. Return on first success (min 2000 chars)."""
+    for source_fn in [fetch_from_edgar, fetch_from_fmp, fetch_from_motley_fool]:
+        try:
+            result = await source_fn(ticker)
+            if result and len(result.text) >= 2000:
+                return result
+        except Exception:
+            continue
+    raise TranscriptNotFoundError(ticker)
 ```
 
 ### `edgar.py` — SEC EDGAR fetcher
 
 ```python
 EDGAR_BASE  = "https://data.sec.gov/submissions"
-SEARCH_BASE = "https://efts.sec.gov/LATEST/search-index"
 HEADERS     = {"User-Agent": os.getenv("EDGAR_USER_AGENT")}
 
 async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
     # 1. GET /submissions/{cik}.json  →  resolve ticker → CIK
-    # 2. Filter recent 8-K filings
-    # 3. Check exhibits 99.1 / 99.2 for transcript markers
-    #    ("operator", "question-and-answer", speaker turn patterns)
-    # 4. Fetch and return exhibit text
+    # 2. Filter recent 8-K filings (last 120 days)
+    # 3. Parse filing index page with BeautifulSoup — find EX-99.1 / EX-99.2 rows by type,
+    #    NOT by filename (filenames vary wildly, e.g. d729501dex991.htm)
+    # 4. Fetch exhibit and validate transcript markers
+    # NOTE: Most large-cap companies (AAPL, MSFT, etc.) do NOT file call transcripts
+    # with the SEC — they only file press releases. EDGAR only works for companies
+    # that explicitly include the transcript as an 8-K exhibit.
 ```
 
-### `scraper.py` — Motley Fool fallback
+### `fmp_transcript.py` — Financial Modeling Prep fallback
 
 ```python
-# URL pattern: https://www.fool.com/earnings/call-transcripts/{yyyy}/{mm}/{dd}/
-#              {ticker}-q{n}-{yyyy}-earnings-call-transcript/
-POLITENESS_DELAY = float(os.getenv("SCRAPER_DELAY_MS", 1500)) / 1000
+# Requires FMP_KEY env var. Returns None gracefully if key is absent.
+# Endpoint: GET https://financialmodelingprep.com/api/v3/earning_call_transcript/{ticker}
+#             ?limit=1&apikey={FMP_KEY}
+# Coverage: all S&P 500 + most mid-caps. Free tier = 250 req/day.
+# This is the primary source for all major tickers that don't file with EDGAR.
 
-async def fetch_from_motley_fool(ticker: str) -> TranscriptResult | None:
-    # 1. Resolve latest transcript URL
-    # 2. GET with realistic headers (User-Agent, Accept-Language)
-    # 3. BeautifulSoup — strip nav/ads, return article body
-    # 4. Validate transcript markers
-    # 5. await asyncio.sleep(POLITENESS_DELAY)
+async def fetch_from_fmp(ticker: str) -> TranscriptResult | None: ...
+```
+
+### `scraper.py` — last-resort fallback
+
+```python
+# Motley Fool's search and listing endpoints are dead (410/404 as of 2026).
+# scraper.py now wraps a stockanalysis.com approach but that site blocks
+# non-browser requests. This source reliably returns None for all tickers.
+# Kept in the waterfall for future replacement — do not remove the slot.
+POLITENESS_DELAY = float(os.getenv("SCRAPER_DELAY_MS", "1500")) / 1000
 ```
 
 ---
@@ -490,7 +513,7 @@ interface QAState {
 
 **Env vars to set in Railway dashboard:**
 `DATABASE_URL` (auto), `ANTHROPIC_API_KEY`, `EDGAR_USER_AGENT`, `CORS_ORIGINS`,
-`REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `NEWSAPI_KEY`, `FINNHUB_KEY`
+`FMP_KEY`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `NEWSAPI_KEY`, `FINNHUB_KEY`
 
 ---
 
@@ -509,3 +532,8 @@ interface QAState {
 - Never create a `.env.example` file — it is permanently gitignored after a credential leak; document variables in CLAUDE.md instead
 - Never add a ticker endpoint without running it through `_validate_ticker()` first
 - Never call `feedparser.parse()` or any other synchronous network library directly in async code
+- Never match EDGAR exhibit filenames by string pattern (e.g. "99-1", "99.1") — parse the filing
+  index HTML with BeautifulSoup and match the "Type" column for "EX-99.1" / "EX-99.2" instead,
+  since filenames vary wildly (e.g. `d729501dex991.htm`)
+- Never import `TranscriptResult` from `services.transcript` — import from `services.models` to
+  avoid the circular import between transcript.py ↔ edgar.py ↔ scraper.py

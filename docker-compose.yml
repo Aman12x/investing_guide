@@ -20,10 +20,10 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/earningslens
-      PORT: "8000"
+      PORT: "8001"
     env_file:
       - ./backend/.env
     depends_on:

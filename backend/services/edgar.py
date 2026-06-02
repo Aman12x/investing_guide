@@ -5,8 +5,9 @@ import re
 from datetime import date, datetime, timedelta
 
 import httpx
+from bs4 import BeautifulSoup
 
-from services.transcript import TranscriptResult
+from services.models import TranscriptResult
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,26 @@ def _is_transcript(text: str) -> bool:
 def _extract_quarter(text: str) -> str | None:
     m = _QUARTER_RE.search(text)
     return m.group(0).upper() if m else None
+
+
+def _find_exhibit_urls(index_html: str, index_url: str) -> list[str]:
+    """Parse the SEC filing index page and return URLs for EX-99.1 / EX-99.2 exhibits."""
+    soup = BeautifulSoup(index_html, "html.parser")
+    urls: list[str] = []
+    for row in soup.find_all("tr"):
+        cells = row.find_all("td")
+        if not cells:
+            continue
+        row_text = " ".join(c.get_text(strip=True) for c in cells)
+        if not re.search(r"EX-99\.[12]", row_text, re.IGNORECASE):
+            continue
+        link = row.find("a", href=True)
+        if not link:
+            continue
+        href: str = link["href"]
+        url = href if href.startswith("http") else f"https://www.sec.gov{href}"
+        urls.append(url)
+    return urls
 
 
 async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
@@ -90,17 +111,7 @@ async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
             except httpx.HTTPError:
                 continue
 
-            # Look for exhibit 99.1 / 99.2 links in the index page
-            for exhibit in ["99-1", "99-2", "99.1", "99.2"]:
-                href_match = re.search(
-                    rf'href="([^"]*{re.escape(exhibit)}[^"]*\.(?:htm|txt))"',
-                    idx_resp.text,
-                    re.IGNORECASE,
-                )
-                if not href_match:
-                    continue
-                exhibit_path = href_match.group(1)
-                exhibit_url = f"https://www.sec.gov{exhibit_path}" if exhibit_path.startswith("/") else f"{index_url}{exhibit_path}"
+            for exhibit_url in _find_exhibit_urls(idx_resp.text, index_url):
                 try:
                     ex_resp = await client.get(exhibit_url)
                     ex_resp.raise_for_status()
@@ -111,12 +122,11 @@ async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
                 if not _is_transcript(text):
                     continue
 
-                quarter = _extract_quarter(text)
                 return TranscriptResult(
                     ticker=ticker,
                     text=text,
                     source="edgar",
-                    quarter=quarter,
+                    quarter=_extract_quarter(text),
                     report_date=fdate,
                 )
 
