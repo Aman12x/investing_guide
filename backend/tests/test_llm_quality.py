@@ -27,16 +27,31 @@ _BASELINES_DIR.mkdir(parents=True, exist_ok=True)
 
 _JUDGE_PROMPT = """
 You are a strict financial analyst evaluator. Given an earnings call transcript excerpt and a
-ReportJSON produced by an AI analyst, evaluate the following criteria:
+ReportJSON produced by an AI analyst, evaluate the following four criteria and return a JSON object.
 
-1. hallucination: Does every metric value and delta cited in the report appear verbatim (or as a
-   clear paraphrase) in the transcript? Answer false if any metric is invented.
-2. rationale_support: Is the signalRationale supported by evidence in the transcript? Answer false
-   if the rationale contradicts or ignores key transcript content.
-3. sentiment_calibration: Does sentiment.overall (0–100) match the overall tone of the transcript?
-   A score > 75 requires clearly bullish tone; a score < 40 requires clearly cautious or negative tone.
-4. contradiction_accuracy: If contradictions[] is non-empty, are those contradictions real and
-   accurately described based on the transcript?
+Field semantics — read carefully before answering:
+
+1. "hallucination" — set to TRUE if every metric value and delta in the report is supported by
+   the transcript (verbatim or clear paraphrase). Set to FALSE only if a specific number or claim
+   is clearly invented and cannot be found or reasonably inferred from the transcript.
+   Terminology differences (e.g. "gross margin" vs "operating margin") are NOT hallucination unless
+   the numeric value itself is wrong. If the notes say "all metrics are accurate," return true.
+
+2. "rationale_support" — set to TRUE if the signalRationale is grounded in evidence from the
+   transcript and does not contradict what management said. Set to FALSE if the rationale
+   explicitly contradicts a key fact (e.g., calls a self-acknowledged miss a beat).
+
+3. "sentiment_calibration" — set to TRUE if sentiment.overall (0–100) matches the transcript tone.
+   Scores above 75 require a clearly bullish transcript; below 40 require a clearly cautious one.
+
+4. "contradiction_accuracy" — set to TRUE if every item in contradictions[] is real and accurately
+   described based on the transcript. Set to TRUE also when contradictions[] is empty and that is
+   appropriate.
+
+Schema note: the "operatingMargin" field in the report is a catch-all for the primary margin metric
+the transcript discusses (gross margin, operating margin, EBITDA margin, etc.). The analyst correctly
+reports whatever margin metric is available. Do NOT flag a mismatch between the field name
+"operatingMargin" and a reported value of "gross margin" as hallucination — they are the same slot.
 
 Return ONLY valid JSON with no markdown fences:
 {"hallucination": true|false, "rationale_support": true|false, "sentiment_calibration": true|false, "contradiction_accuracy": true|false, "notes": "brief explanation"}

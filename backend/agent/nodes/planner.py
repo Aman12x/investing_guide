@@ -7,7 +7,7 @@ from observability import make_anthropic_client, observe, update_trace
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "claude-sonnet-4-6"
+_MODEL = "claude-haiku-4-5-20251001"
 
 PLANNER_PROMPT = """
 You are an analysis planner. Given a ticker and user intent, decide:

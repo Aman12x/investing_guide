@@ -7,7 +7,7 @@ from observability import make_anthropic_client, observe, update_trace
 logger = logging.getLogger(__name__)
 
 _MAX_TRANSCRIPT_CHARS = 60_000
-_MODEL = "claude-sonnet-4-6"
+_MODEL = "claude-haiku-4-5-20251001"
 
 _SYSTEM_PROMPT = (
     "You are an expert earnings analyst. The user will ask questions about the provided earnings call transcript. "
