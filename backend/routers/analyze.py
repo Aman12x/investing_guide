@@ -22,7 +22,7 @@ _TICKER_RE = re.compile(r"^[A-Z0-9.]{1,10}$")
 
 
 def _validate_ticker(ticker: str) -> str:
-    t = ticker.upper().strip()
+    t = ticker.strip()
     if not _TICKER_RE.match(t):
         raise HTTPException(
             status_code=422,

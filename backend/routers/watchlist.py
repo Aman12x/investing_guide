@@ -2,6 +2,7 @@ import logging
 import re
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +16,7 @@ _TICKER_RE = re.compile(r"^[A-Z0-9.]{1,10}$")
 
 
 def _validate_ticker(ticker: str) -> str:
-    t = ticker.upper().strip()
+    t = ticker.strip()
     if not _TICKER_RE.match(t):
         raise HTTPException(
             status_code=422,
@@ -36,7 +37,7 @@ async def add_to_watchlist(ticker: str, db: AsyncSession = Depends(get_db)):
     ticker = _validate_ticker(ticker)
     existing = await db.execute(select(Watchlist).where(Watchlist.ticker == ticker))
     if existing.scalar_one_or_none():
-        return {"ticker": ticker, "message": "already in watchlist"}
+        return JSONResponse(status_code=200, content={"ticker": ticker, "message": "already in watchlist"})
 
     db.add(Watchlist(ticker=ticker))
     await db.commit()
