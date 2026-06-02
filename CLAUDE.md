@@ -13,14 +13,16 @@
 earningslens/
 ├── CLAUDE.md
 ├── docker-compose.yml
-├── docker-compose.prod.yml
 ├── .gitignore
 ├── backend/
 │   ├── Dockerfile
+│   ├── alembic.ini
 │   ├── requirements.txt
 │   ├── main.py                   # FastAPI app, CORS
 │   ├── database.py               # SQLAlchemy engine + session
 │   ├── models.py                 # ORM: Report, Watchlist, QASession
+│   ├── schemas.py                # Pydantic schemas / ReportJSON validation
+│   ├── exceptions.py             # Typed exceptions: TranscriptNotFoundError, ClaudeError, etc.
 │   ├── routers/
 │   │   ├── analyze.py            # POST /analyze/{ticker}
 │   │   ├── ask.py                # POST /ask/{ticker}
@@ -67,6 +69,35 @@ earningslens/
         └── pages/
             └── Home.jsx
 ```
+
+---
+
+## Local development
+
+**Prerequisites:** Docker Desktop running.
+
+```bash
+# 1. Start Postgres + backend (from repo root)
+docker compose up --build -d
+
+# 2. Run migrations (first time only, or after schema changes)
+docker compose exec backend alembic upgrade head
+
+# 3. Start frontend (separate terminal)
+cd frontend && npm run dev
+```
+
+- Backend: `http://localhost:8001` (port 8000 is taken by Docker Desktop on Mac)
+- Frontend: `http://localhost:5173`
+- Health check: `curl http://localhost:8001/health`
+
+**Logs:** `docker compose logs -f backend`
+
+**Rebuild after backend code changes:** `docker compose up --build -d backend`
+The frontend hot-reloads automatically via Vite — no restart needed.
+
+**First run:** Migrations must be applied manually after `docker compose up`. Alembic does not
+run automatically in the local compose setup (only in the Railway deploy command).
 
 ---
 
