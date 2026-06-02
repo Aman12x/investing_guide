@@ -1,0 +1,99 @@
+APPLE INC. Q1 2025 EARNINGS CONFERENCE CALL
+January 30, 2025
+
+Operator: Good afternoon and welcome to the Apple Q1 2025 Earnings Conference Call. At this time, all participants are in listen-only mode. After the speakers' presentation, there will be a question-and-answer session. Please be advised that today's conference is being recorded.
+
+I would now like to hand the conference over to Suhasini Chandramouli, Director of Investor Relations. Please go ahead.
+
+Suhasini Chandramouli - Director, Investor Relations:
+Thank you. Good afternoon, everyone, and thank you for joining us. Speaking first today is Apple CEO Tim Cook, followed by CFO Luca Maestri. We will then open the call to questions from analysts.
+
+Please note that some of the information you'll hear during our discussion today will consist of forward-looking statements including, without limitation, those regarding revenue, gross margin, operating expenses, other income and expense, taxes, capital allocation, and future business outlook.
+
+Tim Cook - Chief Executive Officer:
+Thank you, Suhasini, and good afternoon, everyone.
+
+We're thrilled to report our best quarter ever, with revenue of $124.3 billion, up 4% year over year. This performance reflects the incredible loyalty of our customers and the strength of our ecosystem. iPhone revenue was $69.1 billion, Services set an all-time record at $26.3 billion, growing 14% year over year, and our installed base of active devices reached an all-time high across all major product categories.
+
+From an innovation perspective, we made tremendous progress this quarter. The iPhone 16 family continued to see strong demand, driven by Apple Intelligence features. We launched Apple Intelligence in additional languages, bringing the power of personal AI to hundreds of millions more users. Customer response has been overwhelmingly positive, with iPhone 16 models with Apple Intelligence enabled seeing meaningfully higher engagement.
+
+On Services, we now have over 1 billion paid subscriptions across all of our services. The App Store had its best quarter ever during the holiday period. Apple TV+ continues to receive critical acclaim, and our advertising business continues to grow at a healthy rate.
+
+Mac revenue was $9.0 billion, up 16% year over year, driven by the new MacBook Pro with M4 chips. iPad revenue was $8.1 billion, up 15% year over year. Our Wearables, Home and Accessories category was $11.7 billion.
+
+Regarding China, revenue in Greater China was $21.0 billion. While we saw some pressure from competitive dynamics, particularly in the mid-range smartphone segment, our premium iPhone franchise remained healthy. We continue to see strong interest in Apple Intelligence features as they roll out in Simplified Chinese later this year.
+
+Our operational execution continues to be excellent. Our teams have worked tirelessly to deliver amazing products and experiences to our customers. I want to thank every Apple employee for their dedication and hard work.
+
+Luca Maestri - Senior Vice President and Chief Financial Officer:
+Thank you, Tim. Good afternoon, everyone.
+
+Revenue for the December quarter was $124.3 billion, up 4% year over year and a new all-time record for the company. This set an all-time revenue record in many markets including the United States, Canada, Mexico, France, Germany, Spain, the UK, India, Indonesia, the Philippines, and Saudi Arabia.
+
+Products revenue was $98.3 billion, while Services revenue was $26.3 billion, up 14% year over year and an all-time record. The geographic breakdown was as follows: Americas revenue was $52.5 billion, Europe was $33.9 billion, Greater China was $21.0 billion, Japan was $7.9 billion, and Rest of Asia Pacific was $9.0 billion.
+
+Gross margin was 46.9%, up 60 basis points year over year and above the high end of our guidance range. Products gross margin was 39.4%. Services gross margin was 75.2%.
+
+Operating income was $58.0 billion. Net income was $36.3 billion, or $2.40 per diluted share, which was above our expectations.
+
+During the quarter, we generated operating cash flow of $29.9 billion. We returned over $30 billion to shareholders, including $3.8 billion in dividends and equivalents and $26.1 billion through open market repurchases of 148 million Apple shares.
+
+Now let me turn to our outlook for the March quarter. We expect revenue to grow in the low to mid single digits year over year. We expect gross margin to be between 46.5% and 47.5%. We expect OpEx between $15.3 and $15.5 billion. We expect OI&E of around negative $100 million. And we expect our tax rate to be around 15.5%.
+
+Apple Board of Directors has authorized an additional $90 billion for share repurchases, reflecting our confidence in our business and our commitment to returning value to shareholders.
+
+Suhasini Chandramouli:
+Thank you, Luca. We will now open the call for questions.
+
+Operator: We will now conduct a question-and-answer session. Our first question comes from Erik Woodring with Morgan Stanley.
+
+Erik Woodring - Morgan Stanley:
+Good afternoon. Thank you for taking my question. Tim, can you help us understand the Apple Intelligence adoption curve? Are you seeing meaningful impact on upgrade cycles yet, and how do you think about the ramp through the year?
+
+Tim Cook:
+Thanks, Erik. We're really pleased with the early response to Apple Intelligence. Users who have it enabled are spending significantly more time using the features and their satisfaction scores are very high. The iPhone 16 Pro and Pro Max have seen particularly strong attach rates for the new AI features. In terms of upgrade cycle impact, it's still early days, but we're seeing encouraging signals particularly among users who have been on older devices for multiple years. We'll have more to share as we progress through the year.
+
+Erik Woodring - Morgan Stanley:
+That's helpful. As a follow-up, Luca, on the margin side, how should we think about Services margin going forward given the content investment in Apple TV+?
+
+Luca Maestri:
+Services gross margin at 75.2% was strong this quarter. We do continue to invest in content for Apple TV+, which creates some headwinds. However, we're also seeing the benefits of scale across our other services businesses. As we've said before, we expect Services gross margin to generally be in the mid-70s range over time, with some quarterly variability.
+
+Operator: Our next question comes from Amit Daryanani with Evercore ISI.
+
+Amit Daryanani - Evercore ISI:
+Thanks for taking my question. On China, the $21 billion revenue number, can you frame the underlying dynamic? You mentioned competitive pressure in mid-range. How do you think about the trajectory there?
+
+Tim Cook:
+China remains an incredibly important market for us. We had a challenging compare versus last year, but our premium iPhone business remains healthy. Apple Intelligence will come to mainland China later this year, and we believe that will be a meaningful tailwind for our premium products. We're investing significantly in our developer relationships and our local ecosystem there. We remain quite optimistic about our long-term opportunity in China.
+
+Amit Daryanani - Evercore ISI:
+One more if I may. The $90 billion buyback authorization is quite significant. How should we think about the pacing and your capital allocation philosophy going forward?
+
+Luca Maestri:
+Our philosophy hasn't changed. We want to be net cash neutral over time, and we'll continue to return excess cash to shareholders. The $90 billion authorization gives us substantial flexibility. We'll continue to be opportunistic in how we execute these repurchases. Given our strong cash generation, we feel very comfortable with this level of commitment to shareholders.
+
+Operator: Our next question comes from David Vogt with UBS.
+
+David Vogt - UBS:
+Great. Thank you. Tim, on Vision Pro, any update on the trajectory there? And how do you think about the product category evolving over the next 12 to 18 months?
+
+Tim Cook:
+Vision Pro is the most innovative product we've ever shipped. Developer adoption has been strong, and we're seeing some really compelling enterprise use cases emerge. Healthcare, aviation training, design and engineering workflows — these are areas where spatial computing is genuinely transformative. Consumer adoption is still in early stages, which is typical for a new platform. We're playing the long game here. We'll have more product news to share at the appropriate time.
+
+David Vogt - UBS:
+Thank you. Just a quick follow-up on Mac. The 16% growth was quite strong. Is this primarily M4 driven, or are you also seeing broader PC market recovery?
+
+Tim Cook:
+The M4 transition has been a major driver. Performance per watt improvements are resonating strongly with both consumer and professional customers. We're also seeing some favorable timing from enterprise refresh cycles. The Mac continues to gain market share, and we're very pleased with the momentum.
+
+Operator: That concludes today's question-and-answer session. I would now like to hand the conference back to Suhasini Chandramouli for closing remarks.
+
+Suhasini Chandramouli:
+Thank you, Operator. A replay of today's call will be available for two weeks as a podcast on the Apple Podcast app, by dialing 888-203-1112 or 719-457-0820, and entering confirmation code 3155189.
+
+Members of the press with additional questions can contact Josh Rosenstock at 408-862-1142, and financial analysts can contact Suhasini Chandramouli at 408-974-3123.
+
+Thank you all for joining us today.
+
+Operator: This concludes today's conference call. Thank you for participating. You may now disconnect.

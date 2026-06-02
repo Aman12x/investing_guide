@@ -68,21 +68,23 @@ class ReportJSON(BaseModel):
     @field_validator("contradictions")
     @classmethod
     def cap_contradictions(cls, v: list[str]) -> list[str]:
-        return v[:3]
+        if len(v) > 3:
+            raise ValueError(f"contradictions must have at most 3 items, got {len(v)}")
+        return v
 
     @field_validator("keyHighlights")
     @classmethod
     def normalise_highlights(cls, v: list[str]) -> list[str]:
-        if len(v) < 5:
+        if len(v) != 5:
             raise ValueError(f"keyHighlights must have exactly 5 items, got {len(v)}")
-        return v[:5]
+        return v
 
     @field_validator("watchlist")
     @classmethod
     def normalise_watchlist(cls, v: list[str]) -> list[str]:
-        if len(v) < 3:
+        if len(v) != 3:
             raise ValueError(f"watchlist must have exactly 3 items, got {len(v)}")
-        return v[:3]
+        return v
 
 
 class AskRequest(BaseModel):

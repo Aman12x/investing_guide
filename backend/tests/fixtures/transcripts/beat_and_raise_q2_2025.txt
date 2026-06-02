@@ -1,0 +1,84 @@
+CALIBRATION CORP. Q2 2025 EARNINGS CONFERENCE CALL
+July 30, 2025
+
+Operator: Good afternoon. Welcome to Calibration Corp's Q2 2025 Earnings Conference Call. All participants are in listen-only mode. Following the presentation, there will be a question-and-answer session.
+
+Sarah Chen - Head of Investor Relations:
+Good afternoon, everyone, and thank you for joining us. On today's call are James Peterson, Chief Executive Officer, and Rachel Williams, Chief Financial Officer.
+
+James Peterson - Chief Executive Officer:
+Thank you, Sarah. Good afternoon, everyone.
+
+I'll cut straight to it: this was an exceptional quarter. Revenue of $3.8 billion came in 8% above consensus expectations. We grew 22% year over year — our fastest growth rate in five years. Every single business unit beat plan.
+
+Our software subscription business grew 35% year over year and now represents 58% of total revenue, up from 48% a year ago. Annual recurring revenue reached $8.2 billion, up 31% year over year, and our net revenue retention rate improved to 118%, up 3 points sequentially. Customer count grew 24% to 14,200 enterprise customers.
+
+Our gross margin expanded 180 basis points year over year to 74.2%, reflecting the mix shift to higher-margin software. This was above the high end of our guidance range.
+
+On guidance: we are raising full-year revenue guidance from $13.8 billion to $14.4 billion, representing 19% growth, up from our prior guidance of 16% growth. We are raising full-year operating margin guidance by 200 basis points. We are also initiating our first-ever share repurchase program, with authorization to buy back up to $1.5 billion of shares over the next 24 months.
+
+The business has never been in better shape. Competitive win rates are at all-time highs. Sales force productivity is up 18% year over year. And we have visibility into the second half that gives us high confidence in our raised guidance.
+
+Rachel Williams - Chief Financial Officer:
+Thank you, James. Let me provide detail on the financial results.
+
+Q2 revenue was $3.8 billion, up 22% year over year, representing an $280 million beat versus consensus. Subscription and support revenue was $2.2 billion, up 35% year over year. Professional services revenue was $1.6 billion, up 9% year over year.
+
+Gross profit was $2.82 billion, representing a gross margin of 74.2%, up 180 basis points year over year. This was 80 basis points above the top of our guidance range.
+
+Operating income was $760 million, representing a 20% operating margin, up 250 basis points year over year. This beat consensus by $95 million.
+
+Earnings per share of $1.42 beat consensus of $1.18 by $0.24 — a 20% beat. This is the largest EPS beat in our company's history.
+
+Free cash flow was $620 million for the quarter, up 45% year over year. We ended the quarter with $4.2 billion of cash and equivalents, and zero net debt.
+
+Now turning to guidance. For Q3, we expect revenue between $3.7 billion and $3.75 billion, representing approximately 18% to 20% growth. We expect gross margin between 74% and 75%. We expect operating margin between 19.5% and 20.5%. We expect EPS between $1.38 and $1.44.
+
+For the full year, as James mentioned, we are raising revenue guidance to $14.3 billion to $14.5 billion. We are raising operating margin guidance to approximately 20%. And we are raising EPS guidance to $5.50 to $5.65, up from prior guidance of $5.00 to $5.15.
+
+Sarah Chen:
+We will now open the call for questions.
+
+Operator: Our first question comes from Alex Thompson with Goldman Sachs.
+
+Alex Thompson - Goldman Sachs:
+Congratulations on the quarter. James, the net revenue retention of 118% is impressive. What's driving the improvement, and is this sustainable?
+
+James Peterson:
+Thank you, Alex. The improvement is driven by three things: first, customers expanding usage as our platform becomes more central to their operations; second, new product attach — our AI analytics module is being added by 40% of renewing customers; and third, price increases holding up better than expected. We believe 115% to 120% is a sustainable range for us given our product roadmap and customer satisfaction scores, which just hit an all-time high of 94%.
+
+Alex Thompson - Goldman Sachs:
+And Rachel, the EPS beat was massive. How much of this was operational leverage versus any one-time items?
+
+Rachel Williams:
+This was almost entirely operational. The gross margin expansion from software mix shift is structural. The operating leverage from revenue growth flowing through is structural. There were no material one-time benefits. We had a $15 million tax benefit, but that's relatively small. The business is genuinely operating at a higher efficiency level.
+
+Operator: Our next question comes from Maria Santos with JP Morgan.
+
+Maria Santos - JPMorgan:
+Great quarter. On the raised full-year guidance — the raise was quite significant. How conservative are you being? The Q3 midpoint implies a sequential deceleration.
+
+Rachel Williams:
+We guide to a range we're highly confident we can achieve and exceed. The sequential moderation in Q3 reflects normal seasonality — Q2 is typically our strongest quarter for deal closings. Our Q4 is typically also very strong. The full-year raise reflects genuine visibility into our pipeline and renewal calendar. We wouldn't raise by $600 million at the midpoint if we didn't have conviction.
+
+Maria Santos - JPMorgan:
+James, on competition — are you seeing any pricing pressure from new entrants?
+
+James Peterson:
+Our competitive win rates are at all-time highs. We won 73% of competitive bake-offs in Q2, up from 65% a year ago. New entrants are a constant, but our installed base, integration depth, and AI capabilities are creating a moat that's harder to cross every quarter. We're not seeing meaningful pricing pressure. If anything, our pricing power is improving as customers see the ROI from our platform.
+
+Operator: Our next question is from David Kim with UBS.
+
+David Kim - UBS:
+James, on the new buyback — the $1.5 billion authorization. Why now, and how should we think about the prioritization versus M&A?
+
+James Peterson:
+We initiated the buyback because we have excess cash, we're generating strong free cash flow, and we believe our shares are undervalued relative to intrinsic value. We don't have near-term M&A targets that require this capital. We're disciplined acquirers — we've only done bolt-on acquisitions at reasonable valuations. The buyback is additive to, not instead of, our M&A strategy.
+
+David Kim - UBS:
+And final question: the software mix shift to 58% — where does that stabilize?
+
+Rachel Williams:
+We see software as a percentage of revenue continuing to increase. Our long-term model calls for software at 65% to 70% of revenue as we expand into new product categories and continue the natural migration of legacy services customers to subscription. This mix shift is the primary driver of our long-term margin expansion story.
+
+Operator: That concludes our Q&A. Thank you everyone for joining us today.

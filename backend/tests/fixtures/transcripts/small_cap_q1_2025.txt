@@ -1,0 +1,63 @@
+VERTEX INDUSTRIAL SYSTEMS, INC. Q1 2025 EARNINGS CONFERENCE CALL
+May 8, 2025
+
+Operator: Welcome to the Vertex Industrial Systems First Quarter 2025 Earnings Conference Call. All participants are in listen-only mode.
+
+Mike Torres - Chief Executive Officer:
+Thank you, operator. Good morning, everyone. I'm Mike Torres, CEO of Vertex Industrial, and I'm joined today by our CFO, Lisa Park.
+
+Before I get into results, I want to acknowledge that this is our first earnings call since our IPO six months ago, and we appreciate the investors and analysts who have joined us.
+
+Q1 revenue was $142 million, up 11% year over year, in line with our IPO guidance range of 10% to 12% growth. Adjusted EBITDA was $18.4 million, representing a 13% margin, also in line with guidance.
+
+Our core industrial automation software segment grew 18% year over year to $98 million. This business serves mid-market manufacturers who are automating their production lines, and demand remains healthy despite broader macro uncertainty. Customer count grew to 1,240 enterprises, up from 1,100 a year ago.
+
+Our legacy hardware distribution business declined 4% year over year to $44 million, which is consistent with our communicated strategy of intentionally winding down this lower-margin segment while we focus resources on software.
+
+Gross margin was 52%, up 200 basis points year over year, driven by the revenue mix shift to software.
+
+Operating cash flow was $12 million for the quarter. We ended with $85 million in cash and $140 million in debt outstanding from our credit facility.
+
+For Q2, we expect revenue of $145 million to $150 million, representing approximately 8% to 12% growth year over year. We are maintaining our full-year revenue guidance of $590 million to $610 million and our full-year adjusted EBITDA guidance of $78 million to $82 million.
+
+Lisa Park - Chief Financial Officer:
+Thank you, Mike. Let me add some color on the financials.
+
+Revenue of $142 million was in line with consensus of $141 million. Our software ARR grew to $312 million, up 22% year over year.
+
+Cash burn was modest at approximately $3 million in the quarter, which was better than our expectations. The working capital dynamics were favorable due to some timing of receivables collection.
+
+Our debt of $140 million is all floating rate tied to SOFR. With rates where they are, our interest expense was $2.4 million in the quarter. This is manageable but it's something we're watching.
+
+One item to flag: we had a one-time charge of $3.2 million related to restructuring our legacy hardware business, which I described. This is captured in our GAAP results but excluded from adjusted EBITDA.
+
+We're affirming guidance. There's no change to our view.
+
+Mike Torres:
+Let me say a few words about the competitive landscape. We're a niche player in the industrial automation software market, which is large and growing but also fragmented. Our competitive differentiation comes from deep integration with legacy industrial equipment protocols, which larger players haven't prioritized.
+
+We are aware that Siemens and Honeywell have both announced initiatives in our market segment. We're watching this carefully. For now, we believe our mid-market customer relationships and our lean go-to-market model give us an advantage with smaller manufacturers who find the enterprise solutions overkill and overpriced. But we'd be naive not to flag this as a longer-term risk.
+
+Operator: We'll now take questions. Our first question comes from Jenny Wu from Pacific Crest.
+
+Jenny Wu - Pacific Crest:
+Good morning. Mike, on the enterprise wins — are these net new customers or expansions within the existing base?
+
+Mike Torres:
+It's a mix. About 60% of the 140 new customers this quarter were net new to Vertex, and 40% were existing customers adding new modules. The new logo wins are encouraging given that we were a private company until recently and our brand awareness in the market is still building.
+
+Jenny Wu - Pacific Crest:
+On competition — you flagged Siemens and Honeywell. Can you be specific about which of their announced products overlap with your offering?
+
+Mike Torres:
+Siemens has announced a mid-market version of their MindSphere industrial IoT platform, targeting companies with under $500 million in revenue. Honeywell has announced a product that competes directly in production line monitoring. These are real initiatives, but both companies have historically struggled to serve the mid-market effectively due to their cost structures. We think we have at least a 12 to 18 month runway before these become direct competitive threats, and by then we'll have additional product capabilities.
+
+Operator: Any other questions? If not, we'll wrap up.
+
+Jenny Wu - Pacific Crest:
+Just one more. The floating rate debt — at what point does that become a concern?
+
+Lisa Park:
+At current rates, we're comfortable. If rates rise significantly from here, it would increase our interest expense, but our cash generation is improving and we have the flexibility to pay down debt over time. We're also evaluating hedging options. It's on our radar.
+
+Operator: Thank you. That concludes today's conference call.

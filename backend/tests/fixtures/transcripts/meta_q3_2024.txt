@@ -1,0 +1,92 @@
+META PLATFORMS, INC. Q3 2024 EARNINGS CONFERENCE CALL
+October 30, 2024
+
+Operator: Good afternoon. Welcome to Meta Platforms Third Quarter 2024 Results Conference Call. All lines have been placed on mute to prevent background noise. After the speakers' remarks, there will be a question-and-answer session.
+
+Kenneth Dorell - Director of Investor Relations:
+Good afternoon and welcome to Meta Platforms' third quarter 2024 earnings conference call. Joining me today to discuss our results are Mark Zuckerberg, CEO, and Susan Li, CFO.
+
+Mark Zuckerberg - Chairman and CEO:
+Thanks, Kenneth.
+
+We had a good quarter with $40.6 billion in revenue, up 19% year over year. Our community continues to grow — more than 3.29 billion people now use at least one of our apps every day.
+
+I want to spend most of my time today on AI because it's the defining strategic initiative across everything we're doing. We now have more than 500 million monthly active users of Meta AI, which makes it one of the most used AI assistants in the world. We're expanding Meta AI access across more surfaces and countries.
+
+Our Llama models continue to be among the most widely used open-source AI models in the world. Llama 3.2 launched in September with multimodal capabilities, and adoption has been very strong.
+
+On advertising, AI is increasingly driving performance. More than one million advertisers are using our generative AI tools to create ads. Advantage+ AI-powered campaigns continue to deliver superior ROI for advertisers, and we're seeing strong adoption in both small businesses and large enterprises.
+
+Reality Labs had a tough quarter, with revenue of $270 million. Quest 3S launched this month at $299, a price point that should significantly expand the market. We remain deeply committed to the long-term vision of spatial computing, but I want to be transparent that this will require continued investment and we won't turn profitable in this segment for some time.
+
+Let me address guidance directly. Q4 revenue guidance of $45 billion to $48 billion reflects continued strong momentum, but I want to flag that our infrastructure costs are scaling significantly as we invest in AI capacity. We're building data centers at an unprecedented rate, and we're going to continue to invest aggressively regardless of short-term cost headwinds.
+
+Susan Li - Chief Financial Officer:
+Thank you, Mark.
+
+Q3 total revenue was $40.6 billion, up 19% year over year. Family of Apps revenue was $40.3 billion, up 19%. Advertising revenue was $39.9 billion, up 19%.
+
+Total costs and expenses were $23.2 billion, up 12% year over year. Research and development expense was $11.1 billion, up 20%. This includes significant investment in our AI infrastructure and models.
+
+Operating income was $17.4 billion, representing an operating margin of 43%. This was below our guidance, as we accelerated infrastructure spending to capture AI capacity. Net income was $15.7 billion, or $6.03 per diluted share.
+
+Capital expenditures were $9.2 billion in Q3. We are raising our full-year 2024 CapEx guidance to $38 billion to $40 billion, up from the prior range of $37 billion to $40 billion.
+
+For Q4, we expect total revenue to be in the range of $45 billion to $48 billion. We expect full-year 2024 total expenses to be in the range of $96 billion to $98 billion, increased from prior guidance of $96 billion to $99 billion — actually let me correct that: full-year expenses of $96 billion to $98 billion, up $2 billion at the midpoint from last quarter's guidance, as we continue to invest aggressively in AI.
+
+For 2025, we expect significant increases in CapEx as we continue to invest in AI infrastructure. We're not providing specific numbers today, but you should expect a step-up that is meaningful relative to 2024.
+
+Kenneth Dorell:
+Thank you. We will now open the call for questions.
+
+Operator: Our first question comes from Brian Nowak with Goldman Sachs.
+
+Brian Nowak - Goldman Sachs:
+Thanks for taking my question. On the expense guidance, Susan, can you help us frame the magnitude of the 2025 CapEx step-up? Investors have been anxious about this.
+
+Susan Li:
+We're not going to give specific 2025 CapEx today. What I can say is that the AI infrastructure buildout is a multi-year investment cycle. The returns will come as AI-driven advertising improvements compound, as Meta AI reaches more users, and as new AI-powered products emerge. We're building for a world where AI is central to everything we do, and that requires substantial upfront investment. We're confident in the long-term returns, but we're asking investors to take a long-term view.
+
+Brian Nowak - Goldman Sachs:
+Understood. On core advertising — the 19% growth was strong, but the second-half guidance implies some deceleration. Can you parse out whether that's cyclical or structural?
+
+Susan Li:
+The deceleration in Q4 implied by the guidance midpoint is modest and reflects normal seasonality. The underlying trends in advertiser ROI and our AI advertising products are strong. Advantage+ continues to outperform manual campaigns by a meaningful margin. We feel good about the advertising business trajectory.
+
+Operator: Next question is from Justin Post with Bank of America.
+
+Justin Post - Bank of America:
+Hi. Mark, on Reality Labs — the $5 billion operating loss run rate this year. How long do we need to wait before this moves toward breakeven?
+
+Mark Zuckerberg:
+I appreciate the directness, Justin. I'm not going to give you a timeline to profitability for Reality Labs because, honestly, we're not optimizing for short-term profitability in that segment. We're building toward what I believe will be the next major computing platform. The Quest 3S at $299 is important because it brings high-quality spatial computing to a price point where mass adoption becomes possible. I'd point to how long it took to build the mobile ecosystem as an analogy. This is a 10-year investment, and we're playing for that.
+
+Justin Post - Bank of America:
+One more — on competition from TikTok, are you seeing any material impact on Reels engagement?
+
+Mark Zuckerberg:
+Our time-spent metrics and engagement metrics on Reels continue to grow. We're not seeing TikTok impact our engagement in any meaningful way. In fact, in markets where TikTok has faced restrictions, we've seen accelerated growth. More importantly, our recommendations AI for Reels has improved dramatically, and I think we're delivering a better product. The combination of our social graph and AI-driven recommendations is a durable competitive advantage.
+
+Operator: Our next question comes from Doug Anmuth with JPMorgan.
+
+Doug Anmuth - JPMorgan:
+Mark, the 500 million monthly active users for Meta AI — how are you monetizing that today, and what's the model for the future?
+
+Mark Zuckerberg:
+Right now, Meta AI is growing the value of our platforms. It makes search more useful, it makes messaging more engaging, it drives time spent. The indirect monetization through improved ad relevance and engagement is real even if it's not directly attributable. The longer-term model — there are multiple potential paths. Business AI tools, subscription services, and fundamentally the improvements to our core advertising business from AI. But I want to be honest: the primary focus right now is on building the best AI assistant, not on extracting near-term revenue from it.
+
+Doug Anmuth - JPMorgan:
+Thank you. Susan, with CapEx going up significantly in 2025, how should we think about free cash flow and the buyback program?
+
+Susan Li:
+We're deeply committed to returning capital to shareholders. Despite higher CapEx, we expect to generate substantial free cash flow given our earnings power. The buyback program remains active. In Q3 we repurchased $8.9 billion in shares. We'll continue to be opportunistic, but the scale of buybacks may moderate slightly in 2025 given the elevated CapEx cycle.
+
+Operator: We have time for one more question. Colin Sebastian with Baird.
+
+Colin Sebastian - Baird:
+Thank you. Mark, on Llama — the open-source strategy. How does that create sustainable competitive advantage if competitors can use the same models?
+
+Mark Zuckerberg:
+Open source has been consistently misunderstood as a disadvantage. Our competitive advantage in AI isn't just the base model — it's the compute scale, the data from our ecosystem, the integration into our products, and the talent. By open-sourcing Llama, we're building a ecosystem where our AI stack becomes the industry standard, making it easier to recruit talent and build applications that can eventually plug into our platform. The strategy is working: Llama is the most deployed open-source AI model globally.
+
+Operator: This concludes our Q&A session. Thank you for joining us today.

@@ -1,0 +1,7 @@
+{
+  "signal": "BUY",
+  "confidence_min": 80,
+  "confidence_max": 98,
+  "key_themes": ["revenue beat", "EPS beat", "raised guidance", "NRR improvement", "new buyback"],
+  "notes": "Clean beat-and-raise with no material negatives. First buyback, guidance raised significantly, NRR improving, win rates at all-time high. Should produce very high confidence BUY. Good baseline calibration fixture."
+}

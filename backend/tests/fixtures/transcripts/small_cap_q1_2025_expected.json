@@ -1,0 +1,7 @@
+{
+  "signal": "HOLD",
+  "confidence_min": 45,
+  "confidence_max": 70,
+  "key_themes": ["in-line results", "competitive threat from Siemens/Honeywell", "legacy hardware decline", "floating rate debt"],
+  "notes": "In-line quarter with no beat. Material competitive risk flagged explicitly. Small-cap with limited analyst coverage and no external signals expected. Confidence should be lower due to limited signal coverage. Test for confidence floor when signals are sparse."
+}

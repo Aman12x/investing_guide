@@ -1,0 +1,57 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"   # nightly at 03:00 UTC for LLM eval suite
+
+jobs:
+  unit:
+    name: Unit + Integration (no LLM calls)
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run unit + integration tests
+        run: pytest -m "not llm" --tb=short -q
+        env:
+          EDGAR_USER_AGENT: "EarningsLens ci@earningslens.app"
+          FMP_KEY: ""
+
+  llm-evals:
+    name: LLM Quality Evals (nightly)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run LLM eval suite
+        run: pytest -m llm --tb=short -q
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          EDGAR_USER_AGENT: "EarningsLens ci@earningslens.app"

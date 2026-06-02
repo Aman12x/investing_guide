@@ -1,0 +1,89 @@
+MICROSOFT CORPORATION Q2 FY2025 EARNINGS CONFERENCE CALL
+January 29, 2025
+
+Operator: Welcome to the Microsoft Fiscal Year 2025 Second Quarter Earnings Conference Call. All participants are in listen-only mode. After the speakers' presentation, there will be a question-and-answer session.
+
+Brett Iversen - Vice President, Investor Relations:
+Good afternoon and thank you for joining us today. On the call with me are Satya Nadella, Chairman and Chief Executive Officer, and Amy Hood, Executive Vice President and Chief Financial Officer.
+
+Satya Nadella - Chairman and CEO:
+Thanks, Brett. Good afternoon, everyone. We delivered exceptional results this quarter with $69.6 billion in revenue, up 12% year over year, and earnings per share of $3.23, up 10% year over year.
+
+Microsoft Cloud revenue was $40.9 billion, up 21% year over year. This is a testament to the breadth and depth of our cloud platform.
+
+Azure and other cloud services revenue grew 31% year over year, driven by continued AI acceleration. Azure AI services more than doubled year over year. Every week we see more and more customers making significant AI commitments.
+
+GitHub Copilot now has 1.3 million paid subscribers, and we're seeing strong growth in enterprise adoption. The number of organizations using GitHub Copilot grew over 55% year over year. Developers using Copilot complete tasks up to 55% faster and feel significantly more productive.
+
+Microsoft 365 Copilot continues to see rapid adoption, with the number of customers more than doubling quarter over quarter. Early customers include 85% of the Fortune 500. We're seeing strong engagement with meeting summaries, email drafting, and document generation.
+
+On the infrastructure side, our CapEx investments are paying off. We're seeing strong utilization across our data centers, and Azure capacity constraints that impacted us last quarter are largely resolved. We expect Azure growth to accelerate in the second half of the fiscal year.
+
+Our gaming business delivered $6.0 billion in revenue, up 5% year over year, with Game Pass reaching new subscriber highs. Activision integration is progressing well and delivering synergies ahead of schedule.
+
+Amy Hood - Executive Vice President and CFO:
+Thank you, Satya. Good afternoon, everyone.
+
+Revenue was $69.6 billion, up 12% year over year. Gross margin was $47.8 billion, up 15% year over year. Gross margin percentage was 69%, up 1.5 points year over year. Operating income increased 17% to $31.7 billion. Net income was $24.1 billion, and EPS was $3.23, up 10%.
+
+Productivity and Business Processes revenue was $29.4 billion, up 14%. Microsoft 365 Commercial revenue grew 15%, driven by Copilot adoption and continued E3 and E5 migrations. Dynamics 365 revenue grew 19%.
+
+Intelligent Cloud revenue was $25.5 billion, up 19%. Azure and other cloud services revenue grew 31%. Azure growth came in at the high end of our guidance range.
+
+More Personal Computing revenue was $14.7 billion, up 4%. Windows OEM revenue grew 4%. Search and news advertising revenue grew 21% year over year, excluding traffic acquisition costs.
+
+We repurchased $9.0 billion in shares and paid $2.3 billion in dividends this quarter, returning $11.3 billion to shareholders.
+
+Looking to Q3, we expect Productivity and Business Processes between $29.4 billion and $29.7 billion. Intelligent Cloud between $25.9 billion and $26.2 billion, with Azure growth accelerating to approximately 34% to 35% in constant currency. More Personal Computing between $13.4 billion and $13.8 billion. Total company revenue between $68.7 billion and $69.7 billion. We expect operating margins to be roughly flat year over year.
+
+Brett Iversen:
+We will now open the call for questions.
+
+Operator: Our first question comes from Mark Moerdler with Bernstein Research.
+
+Mark Moerdler - Bernstein:
+Thank you very much. Satya, on the Azure acceleration you're guiding, can you help us understand — is that organic AI demand, or is there a capacity release dynamic where pent-up demand is being served now?
+
+Satya Nadella:
+It's both. The capacity constraints that we had in H1 are substantially resolved. So there's some pent-up demand converting to revenue. But fundamentally, the AI workloads are growing faster than anything else we've seen. Azure AI revenue more than doubling, GitHub Copilot growing 55% in enterprise customers — these are the underlying growth drivers. We feel very good about the H2 acceleration guidance.
+
+Mark Moerdler - Bernstein:
+Great. Amy, on margins — the gross margin improvement was impressive. How should we think about CapEx impact on margins going forward?
+
+Amy Hood:
+Our CapEx investments are ahead of when they depreciate, so there is some near-term dilution. However, we're also seeing strong operating leverage in the cloud segments. We expect gross margin to remain strong, with some quarterly variability based on the mix of AI workloads versus core cloud. The full-year picture should show margin expansion despite the heavy CapEx cycle.
+
+Operator: Next question comes from Keith Weiss with Morgan Stanley.
+
+Keith Weiss - Morgan Stanley:
+Thanks for taking the question. Satya, on Copilot for Microsoft 365 — 85% of Fortune 500 is using it, but what's the average depth of usage? Are these organizations using it broadly, or is it still limited to pilot groups?
+
+Satya Nadella:
+That's the right question. We're in the stage where it's broad experimentation, but we're seeing genuine conversion to broad deployment. The customers who have deployed it most deeply are seeing productivity improvements that are measurable in their financials. The key insight is that this isn't just a productivity tool — it's becoming an intelligence platform. Once you see the meeting summarization, the document intelligence, the workflow automation working together, the value proposition is compelling and the land-and-expand motion is clear.
+
+Keith Weiss - Morgan Stanley:
+Quick follow-up on the M365 seat count. Are you seeing seat count growth re-accelerate, or is this primarily an ARPU story?
+
+Amy Hood:
+It's predominantly an ARPU story at this point. Seat counts in commercial M365 grew modestly. The real driver is the migration to E3 and E5 with Copilot licenses on top. As organizations expand Copilot access from pilots to broader deployment, you'll see both ARPU and eventually seat count impacts.
+
+Operator: Our next question comes from Brent Thill with Jefferies.
+
+Brent Thill - Jefferies:
+Amy, on the CapEx — you've been spending significantly. Can you frame the ROI timeline for these investments?
+
+Amy Hood:
+We design our data center capacity 18 to 24 months ahead of when we expect to monetize it. The investments we're making now in the second half of FY25 will primarily generate returns in FY26 and FY27. We're very confident in the demand trajectory. The returns on our cloud investments have historically been strong, and we see no reason why AI infrastructure will be different — in fact, AI workloads tend to have higher monetization per unit of compute than traditional cloud.
+
+Brent Thill - Jefferies:
+And any color on when Copilot could become a material revenue contributor in aggregate?
+
+Amy Hood:
+We've said we expect it to be a meaningful contributor to growth this fiscal year, and we're on track with that expectation. The specific number isn't something we're going to break out separately, but based on what you see in our overall M365 Commercial and Azure growth rates, the contribution is becoming more visible.
+
+Operator: That concludes our question-and-answer session. I'll now turn the call back to Brett Iversen.
+
+Brett Iversen:
+Thank you, Satya and Amy. In closing, we had a fantastic quarter. For those interested, a recording of this call will be available on Microsoft Investor Relations. Thank you, everyone.
+
+Operator: This concludes today's conference call. You may now disconnect.

@@ -1,0 +1,7 @@
+{
+  "signal": "BUY",
+  "confidence_min": 75,
+  "confidence_max": 95,
+  "key_themes": ["Azure acceleration", "Copilot adoption", "cloud margin expansion", "CapEx ROI"],
+  "notes": "Strong beat on revenue, Azure guidance for acceleration to 34-35%, Copilot doubling QoQ. Should produce a high-confidence BUY."
+}
