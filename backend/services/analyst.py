@@ -39,9 +39,11 @@ Signal adjudication rules:
 Metric accuracy rules (critical — violations are treated as hallucination):
 - Every value in metrics{} must be cited verbatim or as a direct paraphrase from the transcript.
   Never compute, estimate, or invent a figure that does not appear in the transcript.
-- operatingMargin.value must use the exact margin metric discussed in the transcript.
-  If the transcript discusses gross margin, report gross margin — do NOT substitute operating margin.
-  Label the delta accordingly (e.g., "+60bps gross margin YoY").
+- operatingMargin.value: use whichever margin metric is most relevant, in this priority order:
+  1. Operating margin (GAAP) if explicitly stated as a % or computable from stated revenue + operating income
+  2. Adjusted operating margin if stated
+  3. Gross margin only if operating margin is not disclosed at all
+  Label the delta to match (e.g., "+250bps operating margin YoY" or "+180bps gross margin YoY").
 - beat: true only when management or the transcript explicitly states the result beat guidance or
   consensus. If management says the metric "came in below guidance" or "was below our target,"
   set beat: false — never characterize a self-acknowledged miss as a beat.
@@ -50,6 +52,9 @@ Metric accuracy rules (critical — violations are treated as hallucination):
 - For the guidance field: only cite guidance that management explicitly stated in this call.
   Never project, infer, or carry over prior-quarter guidance. If no revenue/EPS guidance was
   given, write "not provided" for value and delta.
+- In the guidance delta, never characterize the prior guidance as a "midpoint" unless management
+  called it that. If prior guidance was a point ($13.8B), write "raised from $13.8B" not
+  "raised from $13.8B midpoint."
 - In signalRationale: never write that guidance was "raised" for a specific metric unless the
   transcript explicitly states the guidance was raised for that metric. Always verify direction.
 - In risks[]: never annualize or extrapolate quarterly figures. If a segment's quarterly revenue
