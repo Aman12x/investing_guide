@@ -22,11 +22,56 @@ class Metric(BaseModel):
         return v  # type: ignore[return-value]
 
 
+def _coerce_buy_hold_watch(v: object) -> object:
+    if not isinstance(v, str):
+        return v
+    upper = v.strip().upper()
+    if upper in {"STRONG BUY", "OUTPERFORM", "OVERWEIGHT", "BULLISH", "POSITIVE"}:
+        return "BUY"
+    if upper in {"SELL", "STRONG SELL", "UNDERPERFORM", "UNDERWEIGHT", "BEARISH", "NEGATIVE", "AVOID"}:
+        return "WATCH"
+    if upper in {"NEUTRAL", "MARKET PERFORM", "MARKET-PERFORM", "IN-LINE", "EQUAL WEIGHT", "EQUAL-WEIGHT"}:
+        return "HOLD"
+    return v
+
+
+def _coerce_reddit_signal(v: object) -> object:
+    if not isinstance(v, str):
+        return v
+    upper = v.strip().upper()
+    if upper in {"BUY", "POSITIVE", "BULLISH"}:
+        return "BULLISH"
+    if upper in {"SELL", "NEGATIVE", "BEARISH", "WATCH"}:
+        return "BEARISH"
+    if upper in {"HOLD", "NEUTRAL", "MIXED"}:
+        return "MIXED"
+    return v
+
+
 class SourceSignals(BaseModel):
     transcript: Literal["BUY", "HOLD", "WATCH"]
     news: Literal["BUY", "HOLD", "WATCH", "MIXED"] | None = None
     analysts: Literal["BUY", "HOLD", "WATCH"] | None = None
     reddit: Literal["BULLISH", "BEARISH", "MIXED"] | None = None
+
+    @field_validator("transcript", mode="before")
+    @classmethod
+    def coerce_transcript(cls, v: object) -> object:
+        result = _coerce_buy_hold_watch(v)
+        # Hard fallback: any unrecognized value (N/A, MIXED, UNKNOWN, etc.) → HOLD
+        if isinstance(result, str) and result not in {"BUY", "HOLD", "WATCH"}:
+            return "HOLD"
+        return result
+
+    @field_validator("news", "analysts", mode="before")
+    @classmethod
+    def coerce_signal(cls, v: object) -> object:
+        return _coerce_buy_hold_watch(v)
+
+    @field_validator("reddit", mode="before")
+    @classmethod
+    def coerce_reddit(cls, v: object) -> object:
+        return _coerce_reddit_signal(v)
 
 
 class Metrics(BaseModel):
@@ -39,6 +84,16 @@ class Metrics(BaseModel):
 class Risk(BaseModel):
     text: str
     level: Literal["high", "med", "low"]
+
+    @field_validator("level", mode="before")
+    @classmethod
+    def coerce_level(cls, v: object) -> object:
+        if isinstance(v, str):
+            lower = v.strip().lower()
+            if lower in {"medium", "moderate"}:
+                return "med"
+            return lower
+        return v
 
 
 class Sentiment(BaseModel):
@@ -75,6 +130,11 @@ class ReportJSON(BaseModel):
     signalRationale: str = Field(min_length=1)
     signalConfidence: float = Field(ge=0, le=100)
     signalChanged: bool
+
+    @field_validator("signal", mode="before")
+    @classmethod
+    def coerce_top_signal(cls, v: object) -> object:
+        return _coerce_buy_hold_watch(v)
     sourceSignals: SourceSignals
     contradictions: list[str] = Field(default_factory=list)
 
