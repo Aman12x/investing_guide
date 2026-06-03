@@ -10,6 +10,30 @@ agent/nodes/formatter.py to enforce the invariants from CLAUDE.md:
 """
 from __future__ import annotations
 
+_SIGNAL_COERCE = {
+    "SELL": "WATCH",
+    "STRONG BUY": "BUY",
+    "STRONG_BUY": "BUY",
+    "OUTPERFORM": "BUY",
+    "OVERWEIGHT": "BUY",
+    "STRONG SELL": "WATCH",
+    "STRONG_SELL": "WATCH",
+    "UNDERPERFORM": "WATCH",
+    "UNDERWEIGHT": "WATCH",
+    "NEUTRAL": "HOLD",
+    "MARKET PERFORM": "HOLD",
+    "MARKET_PERFORM": "HOLD",
+}
+_VALID_SIGNALS = {"BUY", "HOLD", "WATCH"}
+
+
+def _coerce_signal(value: str | None) -> str | None:
+    """Normalize common LLM signal variants to the allowed BUY/HOLD/WATCH enum."""
+    if value is None:
+        return None
+    normalized = _SIGNAL_COERCE.get(value.upper().strip(), value)
+    return normalized if normalized in _VALID_SIGNALS else value
+
 
 def _norm(signal: str | None) -> str | None:
     """Map Reddit BULLISH/BEARISH into the BUY/HOLD/WATCH namespace."""
@@ -25,6 +49,16 @@ def adjudicate(report: dict) -> dict:
     Each rule is applied only when its required fields are present.
     """
     report = dict(report)
+
+    # Coerce top-level signal and sourceSignals.transcript before any rule runs.
+    if report.get("signal"):
+        report["signal"] = _coerce_signal(report["signal"])
+    source_raw = report.get("sourceSignals") or {}
+    if source_raw.get("transcript"):
+        source_raw = dict(source_raw)
+        source_raw["transcript"] = _coerce_signal(source_raw["transcript"])
+        report["sourceSignals"] = source_raw
+
     source = report.get("sourceSignals") or {}
 
     signal = report.get("signal")

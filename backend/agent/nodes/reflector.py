@@ -22,6 +22,14 @@ You have the original transcript and the draft report. Your job:
 If you would change the signal, confidence, risks, or contradictions — return a revised ReportJSON.
 If the draft is solid — return it unchanged.
 
+STRICT ENUM CONSTRAINTS — violating these will cause a hard failure:
+- signal: ONLY "BUY", "HOLD", or "WATCH" (never "SELL", "STRONG BUY", "OUTPERFORM", etc.)
+- sourceSignals.transcript: ONLY "BUY", "HOLD", or "WATCH"
+- sourceSignals.news: ONLY "BUY", "HOLD", "WATCH", "MIXED", or null
+- sourceSignals.analysts: ONLY "BUY", "HOLD", "WATCH", or null
+- sourceSignals.reddit: ONLY "BULLISH", "BEARISH", "MIXED", or null
+- risks[].level: ONLY "high", "med", or "low"
+
 Either way, return a JSON object:
 {
   "report": { ...ReportJSON... },

@@ -1,12 +1,25 @@
 from __future__ import annotations
-from typing import Literal
+import re
+from typing import Annotated, Literal
 from pydantic import BaseModel, Field, field_validator
+
+_QUARTER_RE = re.compile(r"^Q[1-4] \d{4}$")
 
 
 class Metric(BaseModel):
     value: str
     delta: str
     beat: bool
+
+    @field_validator("beat", mode="before")
+    @classmethod
+    def coerce_beat(cls, v: object) -> bool:
+        if isinstance(v, str):
+            if v.lower() == "true":
+                return True
+            if v.lower() == "false":
+                return False
+        return v  # type: ignore[return-value]
 
 
 class SourceSignals(BaseModel):
@@ -49,7 +62,7 @@ class ReportJSON(BaseModel):
     reportDate: str
 
     signal: Literal["BUY", "HOLD", "WATCH"]
-    signalRationale: str
+    signalRationale: str = Field(min_length=1)
     signalConfidence: float = Field(ge=0, le=100)
     signalChanged: bool
     sourceSignals: SourceSignals
@@ -61,9 +74,26 @@ class ReportJSON(BaseModel):
     keyHighlights: list[str]
     watchlist: list[str]
 
-    risks: list[Risk]
+    risks: list[Risk] = Field(min_length=1)
     sentiment: Sentiment
     managementTone: ManagementTone
+
+    @field_validator("quarter")
+    @classmethod
+    def normalise_quarter(cls, v: str) -> str:
+        """Coerce common LLM variants to canonical 'Q1 2025' format."""
+        v = v.strip()
+        if _QUARTER_RE.match(v):
+            return v
+        # e.g. "Q1FY2025", "Q1-2025", "Q1/2025"
+        m = re.match(r"Q([1-4])\s*[-/]?\s*(?:FY)?(\d{4})", v, re.IGNORECASE)
+        if m:
+            return f"Q{m.group(1)} {m.group(2)}"
+        # e.g. "1Q 2025", "1Q2025"
+        m = re.match(r"([1-4])Q\s*(\d{4})", v, re.IGNORECASE)
+        if m:
+            return f"Q{m.group(1)} {m.group(2)}"
+        raise ValueError(f"quarter '{v}' is not a recognised format; expected 'Q1 2025'")
 
     @field_validator("contradictions")
     @classmethod
@@ -87,6 +117,11 @@ class ReportJSON(BaseModel):
         return v
 
 
+class HistoryEntry(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1)
+
+
 class AskRequest(BaseModel):
-    question: str
-    history: list[dict] = Field(default_factory=list)
+    question: str = Field(min_length=1)
+    history: list[HistoryEntry] = Field(default_factory=list)

@@ -32,7 +32,7 @@ async def ask(ticker: str, body: AskRequest, db: AsyncSession = Depends(get_db))
             ticker=ticker,
             transcript=report.raw_transcript or "",
             question=body.question,
-            history=body.history,
+            history=[h.model_dump() for h in body.history],
         )
     except ClaudeError as exc:
         logger.error("Claude QA failed for %s: %s", ticker, exc)
