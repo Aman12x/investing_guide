@@ -7,8 +7,31 @@ from observability import make_anthropic_client, observe, update_trace
 
 logger = logging.getLogger(__name__)
 
+
+def _extract_json(text: str) -> str:
+    """Extract JSON from a response that may be wrapped in markdown code fences."""
+    text = text.strip()
+    if not text:
+        return text
+    if text.startswith("```"):
+        parts = text.split("```")
+        if len(parts) >= 3:
+            candidate = parts[1].strip()
+            if candidate.startswith("json"):
+                candidate = candidate[4:].strip()
+            if candidate:
+                return candidate
+    # Fallback: find outermost { ... }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end > start:
+        return text[start : end + 1]
+    return text
+
+
 _MODEL = "claude-sonnet-4-6"
 _MAX_TRANSCRIPT_CHARS = 40_000
+_MAX_TOKENS = 8192
 
 REFLECTOR_PROMPT = """
 You are a skeptical senior analyst reviewing a junior analyst's report.
@@ -72,7 +95,7 @@ async def reflector_node(state: AgentState) -> dict:
     try:
         response = await client.messages.create(
             model=_MODEL,
-            max_tokens=4096,
+            max_tokens=_MAX_TOKENS,
             system=REFLECTOR_PROMPT,
             messages=[{"role": "user", "content": user_msg}],
         )
@@ -80,12 +103,7 @@ async def reflector_node(state: AgentState) -> dict:
         if not response.content or not hasattr(response.content[0], "text"):
             raise ValueError("Empty reflector response")
 
-        raw = response.content[0].text.strip()
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-            raw = raw.strip()
+        raw = _extract_json(response.content[0].text)
 
         result = json.loads(raw)
         final_report = result.get("report", draft_report)

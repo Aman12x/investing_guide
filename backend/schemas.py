@@ -47,6 +47,16 @@ class Sentiment(BaseModel):
     forwardLooking: float = Field(ge=0, le=100)
     caution: float = Field(ge=0, le=100)
 
+    @field_validator("overall", "ceoConfidence", "forwardLooking", "caution", mode="before")
+    @classmethod
+    def coerce_sentiment_float(cls, v: object) -> float:
+        if isinstance(v, str):
+            try:
+                return float(v.strip().rstrip("%"))
+            except ValueError:
+                pass
+        return v  # type: ignore[return-value]
+
 
 class ManagementTone(BaseModel):
     openingTone: str
