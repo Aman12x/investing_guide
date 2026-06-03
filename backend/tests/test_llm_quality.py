@@ -19,7 +19,13 @@ from schemas import ReportJSON
 from services.analyst import generate_report
 from services.signals.aggregator import ExternalContext
 
-pytestmark = pytest.mark.llm
+pytestmark = [
+    pytest.mark.llm,
+    pytest.mark.skipif(
+        not os.environ.get("ANTHROPIC_API_KEY"),
+        reason="ANTHROPIC_API_KEY not set — skipping live LLM tests",
+    ),
+]
 
 _FIXTURES_DIR = Path(__file__).parent / "fixtures" / "transcripts"
 _BASELINES_DIR = Path(__file__).parent / "fixtures" / "baselines"

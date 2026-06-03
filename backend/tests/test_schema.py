@@ -80,11 +80,11 @@ class TestKeyHighlights:
         with pytest.raises(ValidationError):
             ReportJSON(**bad)
 
-    def test_six_items_raises(self, sample_report):
+    def test_six_items_truncated_to_five(self, sample_report):
         bad = copy.deepcopy(sample_report)
         bad["keyHighlights"] = bad["keyHighlights"] + ["extra item"]
-        with pytest.raises(ValidationError):
-            ReportJSON(**bad)
+        report = ReportJSON(**bad)
+        assert len(report.keyHighlights) == 5
 
 
 class TestWatchlist:
@@ -98,11 +98,11 @@ class TestWatchlist:
         with pytest.raises(ValidationError):
             ReportJSON(**bad)
 
-    def test_four_items_raises(self, sample_report):
+    def test_four_items_truncated_to_three(self, sample_report):
         bad = copy.deepcopy(sample_report)
         bad["watchlist"] = bad["watchlist"] + ["fourth item"]
-        with pytest.raises(ValidationError):
-            ReportJSON(**bad)
+        report = ReportJSON(**bad)
+        assert len(report.watchlist) == 3
 
 
 class TestContradictions:
@@ -116,17 +116,17 @@ class TestContradictions:
         r["contradictions"] = ["a", "b", "c"]
         ReportJSON(**r)
 
-    def test_four_items_raises(self, sample_report):
+    def test_four_items_truncated_to_three(self, sample_report):
         bad = copy.deepcopy(sample_report)
         bad["contradictions"] = ["a", "b", "c", "d"]
-        with pytest.raises(ValidationError):
-            ReportJSON(**bad)
+        report = ReportJSON(**bad)
+        assert len(report.contradictions) == 3
 
-    def test_five_items_raises(self, sample_report):
+    def test_five_items_truncated_to_three(self, sample_report):
         bad = copy.deepcopy(sample_report)
         bad["contradictions"] = ["a", "b", "c", "d", "e"]
-        with pytest.raises(ValidationError):
-            ReportJSON(**bad)
+        report = ReportJSON(**bad)
+        assert len(report.contradictions) == 3
 
 
 class TestRisksLevel:
