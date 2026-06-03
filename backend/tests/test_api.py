@@ -123,9 +123,21 @@ def _valid_report(ticker: str = "AAPL", quarter: str = "Q1 2025") -> dict:
     }
 
 
+def _parse_sse(text: str) -> list[dict]:
+    """Parse SSE response body into a list of JSON event dicts."""
+    import json as _json
+    events = []
+    for line in text.splitlines():
+        if line.startswith("data: "):
+            try:
+                events.append(_json.loads(line[6:]))
+            except _json.JSONDecodeError:
+                pass
+    return events
+
+
 def _agent_returning(report: dict):
-    """Context-manager patch that makes agent.ainvoke return a state with final_report set."""
-    from agent.state import AgentState
+    """Context-manager patch that makes agent.astream yield a state with final_report set."""
     from services.models import TranscriptResult
     from datetime import date
 
@@ -134,21 +146,10 @@ def _agent_returning(report: dict):
         source="fmp", quarter=report["quarter"], report_date=date(2025, 1, 30),
     )
 
-    async def _fake_ainvoke(state):
-        return AgentState(
-            ticker=state.ticker,
-            user_intent=state.user_intent,
-            plan={},
-            transcript=mock_transcript,
-            signals={},
-            draft_report=report,
-            final_report=report,
-            reflection_notes="mocked",
-            iterations=1,
-            sufficient=True,
-        )
+    async def _fake_astream(state, stream_mode=None):
+        yield {"formatter": {"final_report": report, "transcript": mock_transcript}}
 
-    return patch("routers.analyze.agent.ainvoke", _fake_ainvoke)
+    return patch("routers.analyze.agent.astream", _fake_astream)
 
 
 # ── test 1: ticker validation ─────────────────────────────────────────────────
@@ -265,16 +266,20 @@ async def test_concurrent_duplicate_insert_produces_one_row(pg_url):
 async def test_transcript_not_found_error_returns_structured_json(client):
     from exceptions import TranscriptNotFoundError
 
-    async def _raise(_state):
+    async def _raise_astream(state, stream_mode=None):
         raise TranscriptNotFoundError("FAKE")
+        yield  # makes this an async generator
 
-    with patch("routers.analyze.agent.ainvoke", _raise):
+    with patch("routers.analyze.agent.astream", _raise_astream):
         resp = await client.post("/analyze/FAKE")
 
-    assert resp.status_code in (400, 404, 502)
-    body = resp.json()
-    assert "error" in body
-    assert "code" in body
+    # SSE endpoints always return 200; errors are communicated via event type
+    assert resp.status_code == 200
+    events = _parse_sse(resp.text)
+    error_events = [e for e in events if e.get("type") == "error"]
+    assert error_events, f"expected an error event, got: {events}"
+    assert "message" in error_events[0]
+    assert "code" in error_events[0]
 
 
 # ── test 6: /health always 200 ────────────────────────────────────────────────
@@ -292,7 +297,10 @@ async def test_raw_transcript_not_in_analyze_response(client):
         resp = await client.post("/analyze/META")
 
     assert resp.status_code == 200
-    assert "raw_transcript" not in resp.json()
+    events = _parse_sse(resp.text)
+    done_events = [e for e in events if e.get("type") == "done"]
+    assert done_events, f"no done event found in: {events}"
+    assert "raw_transcript" not in done_events[0].get("report", {})
 
 
 # ═════════════════════════════════════════════════════════════════════════════
