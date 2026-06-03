@@ -57,8 +57,9 @@ class SourceSignals(BaseModel):
     @field_validator("transcript", mode="before")
     @classmethod
     def coerce_transcript(cls, v: object) -> object:
+        if v is None:
+            return "HOLD"
         result = _coerce_buy_hold_watch(v)
-        # Hard fallback: any unrecognized value (N/A, MIXED, UNKNOWN, etc.) → HOLD
         if isinstance(result, str) and result not in {"BUY", "HOLD", "WATCH"}:
             return "HOLD"
         return result
