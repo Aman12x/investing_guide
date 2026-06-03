@@ -24,8 +24,9 @@ earningslens/
 │   ├── schemas.py                # Pydantic schemas / ReportJSON validation
 │   ├── exceptions.py             # Typed exceptions: TranscriptNotFoundError, ClaudeError, etc.
 │   ├── routers/
-│   │   ├── analyze.py            # POST /analyze/{ticker}
+│   │   ├── analyze.py            # POST /analyze/{ticker} (SSE), GET /history, GET /latest
 │   │   ├── ask.py                # POST /ask/{ticker}
+│   │   ├── search.py             # GET /search?q= — FMP ticker autocomplete, 1h in-memory cache
 │   │   └── watchlist.py          # GET/POST/DELETE /watchlist
 │   ├── agent/
 │   │   ├── state.py              # AgentState dataclass — shared across all nodes
@@ -64,13 +65,14 @@ earningslens/
         ├── App.jsx
         ├── api.js                # All fetch calls — single source of truth
         ├── components/
-        │   ├── Sidebar.jsx
+        │   ├── Sidebar.jsx         # Ticker combobox with FMP autocomplete dropdown
         │   ├── ReportView.jsx
         │   ├── MetricsGrid.jsx
-        │   ├── SignalBlock.jsx    # Signal badge + confidence + source breakdown
+        │   ├── SignalBlock.jsx      # Signal badge + confidence + source breakdown
         │   ├── SentimentBars.jsx
         │   ├── RiskList.jsx
         │   ├── ManagementTone.jsx
+        │   ├── TrendPanel.jsx       # Multi-quarter sparklines; self-fetches /history; hidden when < 2 quarters
         │   ├── QABar.jsx
         │   └── Toast.jsx
         ├── hooks/
@@ -491,19 +493,30 @@ async def generate_report(
 | Method | Path | Description |
 |--------|------|-------------|
 | GET    | `/health`                  | `{"status":"ok"}` |
-| POST   | `/analyze/{ticker}`        | Runs LangGraph agent — planner → fetch → sufficiency → analyst → reflector → formatter |
-| GET    | `/analyze/{ticker}/latest` | Return cached report if < 24h old |
+| POST   | `/analyze/{ticker}`        | Runs LangGraph agent; **returns SSE stream** — progress events then `{"type":"done","report":{...}}` |
+| GET    | `/analyze/{ticker}/latest` | Return cached report JSON if < 24h old |
+| GET    | `/analyze/{ticker}/history`| Last N quarters for ticker ordered newest-first (default N=6, max 12); returns `ReportJSON[]` |
+| GET    | `/search?q={query}`        | FMP ticker search — `[{symbol, name, exchange}]`; results cached 1h in-memory; returns `[]` if no `FMP_KEY` |
 | POST   | `/ask/{ticker}`            | `{question, history}` → Claude Q&A answer |
 | GET    | `/watchlist`               | List watched tickers |
 | POST   | `/watchlist/{ticker}`      | Add ticker |
 | DELETE | `/watchlist/{ticker}`      | Remove ticker |
+
+**SSE streaming:** `POST /analyze/{ticker}` returns `Content-Type: text/event-stream`. Each
+event is `data: {JSON}\n\n`. Event types:
+- `{"type": "progress", "message": "..."}` — one per LangGraph node (planner, fetch, analyst, reflector, formatter)
+- `{"type": "done", "report": {ReportJSON}}` — final event; frontend resolves here
+- `{"type": "error", "message": "...", "code": "..."}` — terminal failure
+
+The frontend reads SSE via `fetch()` + `ReadableStream` (not `EventSource`, which requires GET).
+Cache hits emit a single progress event then `done` immediately.
 
 **Ticker validation:** All `{ticker}` path parameters are validated against `^[A-Z0-9.]{1,10}$`
 before any service call. Invalid tickers return 422. Both `analyze.py` and `watchlist.py`
 use a shared `_validate_ticker()` helper — add the same check to any new ticker endpoint.
 
 **Caching rule:** Check Postgres first on every `/analyze` call. If same ticker+quarter exists
-and is < 24h old, return cached report — no re-scrape, no Claude call, no signal fetch.
+and is < 24h old, stream a cached response — no re-scrape, no Claude call, no signal fetch.
 Concurrent duplicate inserts are handled via `IntegrityError` catch + rollback — do not remove.
 
 **Error responses:** `{"error": "human-readable message", "code": "SNAKE_CASE_CODE"}`.
@@ -517,9 +530,9 @@ Never expose stack traces in production.
 // useAnalysis owns this
 interface AppState {
   currentReport:  ReportJSON | null
-  history:        ReportJSON[]      // session only, newest first
+  history:        ReportJSON[]      // persisted to localStorage "earningslens_history", cap 20, newest first
   isLoading:      boolean
-  loadingMessage: string
+  loadingMessage: string            // driven by SSE progress events, not a timer
   error:          string | null
 }
 
@@ -531,16 +544,35 @@ interface QAState {
 }
 ```
 
+**localStorage:** `useAnalysis` persists `history` under key `"earningslens_history"` (JSON array,
+max 20 entries, newest-first). Loaded via lazy `useState` initializer on mount. Written on every
+new successful report. De-duplicates by `(ticker, quarter)` — same quarter replaces rather than
+prepends.
+
 `src/api.js` is the only file that calls `fetch`. Exports:
-- `analyzeTickerApi(ticker)` → `ReportJSON`
+- `analyzeTickerApi(ticker, onProgress?)` → `Promise<ReportJSON>` — reads SSE stream; calls `onProgress(message)` on each progress event
+- `getTickerHistoryApi(ticker, n?)` → `Promise<ReportJSON[]>` — calls `GET /analyze/{ticker}/history`
+- `searchTickersApi(q)` → `Promise<{symbol, name, exchange}[]>` — calls `GET /search?q=`
 - `askQuestionApi(ticker, question, history)` → `string`
 - `getWatchlistApi()` → `string[]`
 - `addWatchlistApi(ticker)` → `void`
 - `removeWatchlistApi(ticker)` → `void`
 
-**`<SignalBlock>`** is the new component that renders the composite signal. It receives the full
-`ReportJSON` and renders: signal badge, confidence bar, source breakdown row
+**`<SignalBlock>`** renders the composite signal: badge, confidence bar, source breakdown row
 (`T: BUY  N: HOLD  A: HOLD  R: BEARISH`), and contradiction pills in `--red` when present.
+
+**`<TrendPanel>`** renders below the report in `<ReportView>`. Receives `ticker` prop, self-fetches
+`GET /analyze/{ticker}/history` on mount, renders a 4-card grid of SVG sparklines:
+- EPS Beat/Miss — colored dot per quarter (green=beat, red=miss)
+- Revenue Delta — polyline, parsed from `metrics.revenue.delta` string (e.g. `"+12% YoY"`)
+- Signal Confidence — polyline, 0–100
+- Sentiment Overall — polyline, 0–100
+Hidden entirely when `history.length < 2` (no sparkline without at least two data points).
+
+**`<Sidebar>`** autocomplete: input debounces 300ms, fires `searchTickersApi`, shows a dropdown
+of `{symbol, name, exchange}`. Selecting a suggestion immediately calls `onAnalyze(symbol)` and
+clears the input. Keyboard navigation: ArrowUp/Down moves highlight, Enter selects, Escape closes.
+Falls back gracefully (empty dropdown) when `FMP_KEY` is absent.
 
 ---
 
@@ -604,6 +636,9 @@ interface QAState {
   since filenames vary wildly (e.g. `d729501dex991.htm`)
 - Never import `TranscriptResult` from `services.transcript` — import from `services.models` to
   avoid the circular import between transcript.py ↔ edgar.py ↔ scraper.py
-- Never call agent nodes directly from routers — always go through `agent.ainvoke`
+- Never call agent nodes directly from routers — always go through `agent.astream` (streaming) or `agent.ainvoke`
 - Never let the sufficiency loop run more than 3 iterations — enforce `state.iterations < 3` hard cap
 - `langgraph` and `langchain-anthropic` are in requirements.txt; do not remove them
+- Never use `EventSource` for the analyze endpoint — it only supports GET; use `fetch()` + `ReadableStream` instead
+- Never pin `anthropic==X.Y.Z` in requirements.txt — `langchain-anthropic` requires a newer anthropic than 0.40; use `anthropic>=0.40.0`
+- Never call `agent.astream` without `stream_mode="updates"` — default `"values"` mode doesn't yield node names, making progress events impossible

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 import observability
-from routers import analyze, ask, watchlist
+from routers import analyze, ask, search, watchlist
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(analyze.router)
 app.include_router(ask.router)
 app.include_router(watchlist.router)
+app.include_router(search.router)
 
 
 @app.get("/health")

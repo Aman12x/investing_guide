@@ -1,0 +1,83 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
+.heading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.cardLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.svg polyline {
+  stroke: var(--gold);
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.qLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+}
+
+.latestRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.latestVal {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+
+.noData {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  height: 36px;
+  display: flex;
+  align-items: center;
+}

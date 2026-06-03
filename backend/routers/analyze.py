@@ -1,8 +1,10 @@
+import json
 import logging
 import re
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,13 +14,21 @@ from agent.nodes.formatter import FormatterError
 from agent.state import AgentState
 from database import get_db
 from models import Report
-from observability import observe, update_trace
+from observability import update_trace
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 _CACHE_TTL_HOURS = 24
 _TICKER_RE = re.compile(r"^[A-Z0-9.]{1,10}$")
+
+_NODE_MESSAGES = {
+    "planner":   "Planning analysis…",
+    "fetch":     "Fetching transcript & signals…",
+    "analyst":   "Drafting analysis…",
+    "reflector": "Reviewing draft…",
+    "formatter": "Finalizing report…",
+}
 
 
 def _validate_ticker(ticker: str) -> str:
@@ -29,6 +39,10 @@ def _validate_ticker(ticker: str) -> str:
             detail={"error": "Invalid ticker symbol", "code": "INVALID_TICKER"},
         )
     return t
+
+
+def _sse(data: dict) -> str:
+    return f"data: {json.dumps(data)}\n\n"
 
 
 async def _get_cached(ticker: str, db: AsyncSession) -> Report | None:
@@ -53,7 +67,16 @@ async def analyze_ticker(
     cached = await _get_cached(ticker, db)
     if cached:
         logger.info("Cache hit for %s", ticker)
-        return cached.report_json
+
+        async def _cached_stream():
+            yield _sse({"type": "progress", "message": "Loading cached report…"})
+            yield _sse({"type": "done", "report": cached.report_json})
+
+        return StreamingResponse(
+            _cached_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     initial_state = AgentState(
         ticker=ticker,
@@ -66,71 +89,60 @@ async def analyze_ticker(
         reflection_notes="",
     )
 
-    try:
-        final_state = await _invoke_agent(initial_state)
-    except FormatterError as exc:
-        logger.error("Formatter validation failed for %s: %s", ticker, exc)
-        raise HTTPException(
-            status_code=502,
-            detail={"error": str(exc), "code": "FORMATTER_ERROR"},
-        )
-    except Exception as exc:
-        logger.error("Agent failed for %s: %s", ticker, exc)
-        raise HTTPException(
-            status_code=502,
-            detail={"error": "Agent failed to produce a report", "code": "AGENT_ERROR"},
+    async def _stream():
+        update_trace(
+            name=f"analyze/{ticker}",
+            user_id=ticker,
+            session_id=ticker,
+            input={"ticker": ticker, "intent": intent},
         )
 
-    # ainvoke returns either the state dataclass or a dict depending on LangGraph version
-    if isinstance(final_state, dict):
-        final_report = final_state.get("final_report", {})
-        transcript = final_state.get("transcript")
-    else:
-        final_report = getattr(final_state, "final_report", {})
-        transcript = getattr(final_state, "transcript", None)
+        accumulated: dict = {}
+        try:
+            async for chunk in agent.astream(initial_state, stream_mode="updates"):
+                for node_name, node_updates in chunk.items():
+                    accumulated.update(node_updates)
+                    msg = _NODE_MESSAGES.get(node_name)
+                    if msg:
+                        yield _sse({"type": "progress", "message": msg})
+        except FormatterError as exc:
+            logger.error("Formatter error for %s: %s", ticker, exc)
+            yield _sse({"type": "error", "message": str(exc), "code": "FORMATTER_ERROR"})
+            return
+        except Exception as exc:
+            logger.error("Agent failed for %s: %s", ticker, exc)
+            yield _sse({"type": "error", "message": "Agent failed to produce a report", "code": "AGENT_ERROR"})
+            return
 
-    if not final_report:
-        raise HTTPException(
-            status_code=502,
-            detail={"error": "Agent failed to produce a report", "code": "AGENT_ERROR"},
+        final_report = accumulated.get("final_report") or {}
+        transcript = accumulated.get("transcript")
+
+        if not final_report:
+            yield _sse({"type": "error", "message": "Agent failed to produce a report", "code": "AGENT_ERROR"})
+            return
+
+        db_report = Report(
+            ticker=ticker,
+            company=final_report.get("company", ticker),
+            quarter=final_report.get("quarter", "Unknown"),
+            report_date=transcript.report_date if transcript and hasattr(transcript, "report_date") else None,
+            transcript_source=transcript.source if transcript and hasattr(transcript, "source") else "unknown",
+            raw_transcript=transcript.text if transcript and hasattr(transcript, "text") else "",
+            report_json=final_report,
         )
+        db.add(db_report)
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
 
-    db_report = Report(
-        ticker=ticker,
-        company=final_report.get("company", ticker),
-        quarter=final_report.get("quarter", "Unknown"),
-        report_date=transcript.report_date if transcript and hasattr(transcript, "report_date") else None,
-        transcript_source=transcript.source if transcript and hasattr(transcript, "source") else "unknown",
-        raw_transcript=transcript.text if transcript and hasattr(transcript, "text") else "",
-        report_json=final_report,
+        yield _sse({"type": "done", "report": final_report})
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
-    db.add(db_report)
-    try:
-        await db.commit()
-    except IntegrityError:
-        # Concurrent request already inserted this ticker+quarter — return what's there.
-        await db.rollback()
-        cached = await _get_cached(ticker, db)
-        if cached:
-            return cached.report_json
-        raise HTTPException(
-            status_code=502,
-            detail={"error": "Report storage conflict", "code": "STORAGE_CONFLICT"},
-        )
-
-    return final_report
-
-
-@observe(name="agent_run")
-async def _invoke_agent(state: AgentState):
-    """Thin wrapper so the entire LangGraph execution is one Langfuse trace."""
-    update_trace(
-        name=f"analyze/{state.ticker}",
-        user_id=state.ticker,
-        session_id=state.ticker,
-        input={"ticker": state.ticker, "intent": state.user_intent},
-    )
-    return await agent.ainvoke(state)
 
 
 @router.get("/analyze/{ticker}/latest")
@@ -143,3 +155,22 @@ async def get_latest_report(ticker: str, db: AsyncSession = Depends(get_db)):
             detail={"error": f"No recent report for {ticker}", "code": "REPORT_NOT_FOUND"},
         )
     return cached.report_json
+
+
+@router.get("/analyze/{ticker}/history")
+async def get_ticker_history(
+    ticker: str,
+    n: int = 6,
+    db: AsyncSession = Depends(get_db),
+):
+    ticker = _validate_ticker(ticker)
+    n = max(1, min(n, 12))
+    stmt = (
+        select(Report)
+        .where(Report.ticker == ticker)
+        .order_by(Report.report_date.desc().nullslast(), Report.created_at.desc())
+        .limit(n)
+    )
+    result = await db.execute(stmt)
+    reports = result.scalars().all()
+    return [r.report_json for r in reports]

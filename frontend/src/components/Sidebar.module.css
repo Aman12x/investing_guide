@@ -27,6 +27,10 @@
   gap: var(--space-sm);
 }
 
+.comboWrap {
+  position: relative;
+}
+
 .searchInput {
   background: var(--paper);
   border: 1px solid var(--border);
@@ -156,3 +160,57 @@
 .buy  { background: var(--green); color: white; }
 .hold { background: #856404; color: white; }
 .watch { background: var(--red); color: white; }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  list-style: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.dropdownItem:hover,
+.dropdownActive {
+  background: var(--cream);
+}
+
+.dropSymbol {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  min-width: 52px;
+}
+
+.dropName {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropExchange {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.7;
+}

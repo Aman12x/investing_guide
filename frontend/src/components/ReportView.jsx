@@ -3,6 +3,7 @@ import MetricsGrid from './MetricsGrid';
 import SentimentBars from './SentimentBars';
 import ManagementTone from './ManagementTone';
 import RiskList from './RiskList';
+import TrendPanel from './TrendPanel';
 import styles from './ReportView.module.css';
 
 export default function ReportView({ report }) {
@@ -49,6 +50,8 @@ export default function ReportView({ report }) {
           <RiskList items={report.watchlist} level="med" />
         </div>
       )}
+
+      <TrendPanel ticker={report.ticker} />
     </div>
   );
 }
