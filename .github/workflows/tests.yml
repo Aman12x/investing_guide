@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: "0 3 * * *"   # nightly at 03:00 UTC for LLM eval suite
 
+permissions:
+  contents: write   # needed for the promote job to push to main
+
 jobs:
   unit:
     name: Unit + Integration (no LLM calls)
@@ -32,6 +35,20 @@ jobs:
         env:
           EDGAR_USER_AGENT: "EarningsLens ci@earningslens.app"
           FMP_KEY: ""
+
+  promote:
+    name: Promote dev → main
+    needs: unit
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed for the push
+
+      - name: Push dev to main
+        run: git push origin HEAD:main
 
   llm-evals:
     name: LLM Quality Evals (nightly)
