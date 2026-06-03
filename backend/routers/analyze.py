@@ -13,6 +13,7 @@ from agent.graph import agent
 from agent.nodes.formatter import FormatterError
 from agent.state import AgentState
 from database import get_db
+from services.ticker_aliases import normalize
 from models import Report
 from observability import update_trace
 
@@ -32,7 +33,7 @@ _NODE_MESSAGES = {
 
 
 def _validate_ticker(ticker: str) -> str:
-    t = ticker.strip()
+    t = normalize(ticker.strip())
     if not _TICKER_RE.match(t):
         raise HTTPException(
             status_code=422,
