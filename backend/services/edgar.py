@@ -22,6 +22,34 @@ _TRANSCRIPT_MARKERS = [
 ]
 _QUARTER_RE = re.compile(r"Q[1-4]\s+20\d{2}", re.IGNORECASE)
 
+# Companies that file 8-Ks with earnings press releases only — never actual call transcripts.
+# EDGAR still has their CIKs, so without this blocklist we'd waste time fetching press-release
+# exhibits that pass a loose _is_transcript() check or simply burn the fetch timeout budget.
+_NON_TRANSCRIPT_FILERS: frozenset[str] = frozenset({
+    "AAPL", "MSFT", "GOOGL", "GOOG", "AMZN", "NVDA", "META", "TSLA",
+    "NFLX", "JPM", "BAC", "WFC", "C", "GS", "MS", "BRK.A", "BRK.B",
+    "JNJ", "PFE", "MRK", "ABBV", "LLY", "AMGN", "GILD", "BIIB",
+    "XOM", "CVX", "COP", "SLB",
+    "HD", "WMT", "COST", "TGT", "LOW",
+    "V", "MA", "PYPL", "AXP",
+    "UNH", "CVS", "CI", "HUM",
+    "DIS", "CMCSA", "T", "VZ",
+    "BA", "LMT", "RTX", "GE", "NOC",
+    "INTC", "AMD", "QCOM", "AVGO", "TXN",
+    "ORCL", "CRM", "ADBE", "IBM", "INTU",
+    "NOW", "SNOW", "PLTR", "UBER", "COIN", "RBLX",
+    "SHOP", "SQ", "SPOT", "SNAP", "PINS",
+    "BKNG", "ABNB", "LYFT",
+    "SPGI", "ICE", "MSCI", "BLK", "SCHW",
+    "MCD", "SBUX", "YUM", "NKE", "TJX", "LULU",
+    "PG", "KO", "PEP", "PM", "MO",
+    "CAT", "DE", "HON", "MMM",
+    "AMT", "PLD", "CCI", "EQIX",
+    "NEE", "DUK", "SO",
+    "LIN", "APD", "ECL",
+    "ACN", "ADP", "PAYX",
+})
+
 # Module-level CIK cache — populated once per process lifetime
 _cik_map: dict[str, str] = {}
 
@@ -41,7 +69,7 @@ async def _load_cik_map(client: httpx.AsyncClient) -> None:
 
 def _is_transcript(text: str) -> bool:
     lower = text.lower()
-    return any(marker in lower for marker in _TRANSCRIPT_MARKERS)
+    return sum(1 for marker in _TRANSCRIPT_MARKERS if marker in lower) >= 2
 
 
 def _extract_quarter(text: str) -> str | None:
@@ -70,6 +98,10 @@ def _find_exhibit_urls(index_html: str, index_url: str) -> list[str]:
 
 
 async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
+    if ticker.upper() in _NON_TRANSCRIPT_FILERS:
+        logger.info("EDGAR: %s is a known non-transcript-filer — skipping", ticker)
+        return None
+
     async with httpx.AsyncClient(headers=HEADERS, timeout=20.0) as client:
         await _load_cik_map(client)
         cik = _cik_map.get(ticker.upper())

@@ -43,6 +43,15 @@ def check_sufficiency(state: AgentState) -> dict:
         )
         return {"sufficient": True}
 
+    # With a 30-second transcript timeout, a second failure means all 3 sources genuinely lack data.
+    # If signals are sufficient, proceed immediately rather than burning more API credits on retries.
+    if not has_transcript and has_enough_signals and iterations >= 1:
+        logger.warning(
+            "Transcript unavailable for %s after %d iteration(s) — signals sufficient, proceeding",
+            state.ticker, iterations,
+        )
+        return {"sufficient": True}
+
     if not has_transcript and iterations >= 2:
         logger.warning(
             "Transcript unavailable for %s after %d iterations — proceeding with error flag",

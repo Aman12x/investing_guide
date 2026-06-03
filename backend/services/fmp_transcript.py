@@ -73,8 +73,9 @@ async def fetch_from_fmp(ticker: str) -> TranscriptResult | None:
             logger.warning("FMP transcript request failed for %s: %s", ticker, exc)
             return None
 
-        # Fallback: explicit quarter/year — required on some FMP plans/tickers
-        for q, y in _recent_quarters():
+        # Fallback: explicit quarter/year — try only the 2 most recent quarters.
+        # The full 5-quarter loop burns too many free-tier credits (250/day); limit=1 covers the common case.
+        for q, y in _recent_quarters(n=2):
             try:
                 resp = await client.get(url, params={"quarter": q, "year": y, "apikey": key})
                 resp.raise_for_status()

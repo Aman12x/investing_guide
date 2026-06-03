@@ -120,13 +120,14 @@ run automatically in the local compose setup (only in the Railway deploy command
 DATABASE_URL=postgresql://user:pass@localhost:5432/earningslens
 ANTHROPIC_API_KEY=sk-ant-...
 EDGAR_USER_AGENT="EarningsLens yourname@email.com"   # required by SEC fair-use policy
-SCRAPER_DELAY_MS=1500                                  # politeness delay between scrape requests
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173,https://yourapp.up.railway.app
 
-# Transcript source
+# Transcript sources (waterfall: EDGAR → FMP → Alpha Vantage)
 FMP_KEY=...          # financialmodelingprep.com — free tier 250 req/day; covers all S&P 500+
                      # optional but required for major tickers (AAPL, MSFT, etc.) that don't
                      # file transcripts with EDGAR
+ALPHA_VANTAGE_KEY=...  # alphavantage.co — third-tier fallback; EARNINGS_CALL_TRANSCRIPT endpoint
+                       # optional; free tier limited, premium recommended for this endpoint
 
 # External signal sources
 REDDIT_CLIENT_ID=...
@@ -187,7 +188,7 @@ class Report(Base):
     company           = Column(String, nullable=False)
     quarter           = Column(String(20))            # "Q1 2025"
     report_date       = Column(Date)
-    transcript_source = Column(String)                # "edgar" | "fmp" | "stockanalysis"
+    transcript_source = Column(String)                # "edgar" | "fmp" | "alphavantage"
     raw_transcript    = Column(Text)                  # never sent to frontend
     report_json       = Column(JSONB, nullable=False) # full ReportJSON
     created_at        = Column(DateTime, default=utcnow)
@@ -322,14 +323,13 @@ async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
 async def fetch_from_fmp(ticker: str) -> TranscriptResult | None: ...
 ```
 
-### `scraper.py` — last-resort fallback
+### `scraper.py` — third-tier fallback (Alpha Vantage)
 
 ```python
-# Motley Fool's search and listing endpoints are dead (410/404 as of 2026).
-# scraper.py now wraps a stockanalysis.com approach but that site blocks
-# non-browser requests. This source reliably returns None for all tickers.
-# Kept in the waterfall for future replacement — do not remove the slot.
-POLITENESS_DELAY = float(os.getenv("SCRAPER_DELAY_MS", "1500")) / 1000
+# Alpha Vantage EARNINGS_CALL_TRANSCRIPT endpoint.
+# Requires ALPHA_VANTAGE_KEY env var — returns None gracefully if absent.
+# Tries up to 3 most recent calendar quarters; returns on first hit ≥ 2000 chars.
+# Function is still named fetch_from_motley_fool for waterfall compatibility.
 ```
 
 ---

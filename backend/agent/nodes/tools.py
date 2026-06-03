@@ -10,13 +10,15 @@ from agent.state import AgentState
 
 logger = logging.getLogger(__name__)
 
-_TOOL_TIMEOUT = 5.0
+# Transcript fetch runs a multi-hop waterfall (EDGAR → FMP → AV); needs its own longer timeout.
+_TRANSCRIPT_TIMEOUT = 30.0
+_SIGNAL_TIMEOUT = 5.0
 
 
-async def _safe(coro, name: str, ticker: str):
+async def _safe(coro, name: str, ticker: str, timeout: float = _SIGNAL_TIMEOUT):
     """Run coro with timeout; return None and log on any failure."""
     try:
-        return await asyncio.wait_for(coro, timeout=_TOOL_TIMEOUT)
+        return await asyncio.wait_for(coro, timeout=timeout)
     except asyncio.TimeoutError:
         logger.warning("Tool %s timed out for %s", name, ticker)
         return None
@@ -26,7 +28,7 @@ async def _safe(coro, name: str, ticker: str):
 
 
 async def fetch_transcript_tool(ticker: str):
-    return await _safe(fetch_transcript(ticker), "fetch_transcript", ticker)
+    return await _safe(fetch_transcript(ticker), "fetch_transcript", ticker, timeout=_TRANSCRIPT_TIMEOUT)
 
 
 async def fetch_reddit_tool(ticker: str):
