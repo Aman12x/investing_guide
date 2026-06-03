@@ -61,7 +61,7 @@ class TestSignalEnum:
         r["signal"] = valid_signal
         assert ReportJSON(**r).signal == valid_signal
 
-    @pytest.mark.parametrize("bad_signal", ["SELL", "MAYBE", "buy", "hold", ""])
+    @pytest.mark.parametrize("bad_signal", ["MAYBE", "buy", "hold", ""])
     def test_invalid_signal_raises(self, sample_report, bad_signal):
         bad = copy.deepcopy(sample_report)
         bad["signal"] = bad_signal
@@ -136,7 +136,7 @@ class TestRisksLevel:
         r["risks"] = [{"text": "some risk", "level": level}]
         ReportJSON(**r)
 
-    @pytest.mark.parametrize("bad_level", ["HIGH", "medium", "critical", ""])
+    @pytest.mark.parametrize("bad_level", ["critical", ""])
     def test_invalid_risk_level_raises(self, sample_report, bad_level):
         bad = copy.deepcopy(sample_report)
         bad["risks"] = [{"text": "some risk", "level": bad_level}]

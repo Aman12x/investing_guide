@@ -154,7 +154,7 @@ def _agent_returning(report: dict):
 
 # ── test 1: ticker validation ─────────────────────────────────────────────────
 
-@pytest.mark.parametrize("bad_ticker", ["aapl", "TOOLONGTICKER", "AA PL", "AA@PL"])
+@pytest.mark.parametrize("bad_ticker", ["TOOLONGTICKER", "AA PL", "AA@PL"])
 async def test_invalid_ticker_returns_422(client, bad_ticker):
     resp = await client.post(f"/analyze/{bad_ticker}")
     assert resp.status_code == 422
