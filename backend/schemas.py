@@ -164,6 +164,10 @@ class ReportJSON(BaseModel):
         m = re.match(r"([1-4])Q\s*(\d{4})", v, re.IGNORECASE)
         if m:
             return f"Q{m.group(1)} {m.group(2)}"
+        # Last-resort: extract embedded Q{n} YYYY from messy strings like "FY 2025 / Q1 2026 Update"
+        m = re.search(r"Q([1-4])\s+(\d{4})", v, re.IGNORECASE)
+        if m:
+            return f"Q{m.group(1)} {m.group(2)}"
         raise ValueError(f"quarter '{v}' is not a recognised format; expected 'Q1 2025'")
 
     @field_validator("contradictions", mode="before")
