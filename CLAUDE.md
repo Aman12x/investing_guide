@@ -39,11 +39,11 @@ earningslens/
 │   │       ├── reflector.py      # Claude call — skeptical review, produces final_report
 │   │       └── formatter.py      # Pure Python — validates against ReportJSON schema
 │   ├── services/
-│   │   ├── transcript.py         # Waterfall: EDGAR → FMP → scraper
+│   │   ├── transcript.py         # Waterfall: EDGAR → FMP → StockAnalysis scraper
 │   │   ├── models.py             # TranscriptResult dataclass (shared to avoid circular imports)
 │   │   ├── edgar.py              # SEC EDGAR 8-K fetcher (works for companies that file transcripts)
 │   │   ├── fmp_transcript.py     # Financial Modeling Prep API — primary fallback
-│   │   ├── scraper.py            # Last-resort scraper fallback
+│   │   ├── scraper.py            # StockAnalysis.com two-hop HTML scraper — last-resort fallback
 │   │   ├── signals/
 │   │   │   ├── __init__.py
 │   │   │   ├── reddit.py         # Reddit OAuth → sentiment summary
@@ -187,7 +187,7 @@ class Report(Base):
     company           = Column(String, nullable=False)
     quarter           = Column(String(20))            # "Q1 2025"
     report_date       = Column(Date)
-    transcript_source = Column(String)                # "edgar" | "fmp" | "alphavantage"
+    transcript_source = Column(String)                # "edgar" | "fmp" | "stockanalysis"
     raw_transcript    = Column(Text)                  # never sent to frontend
     report_json       = Column(JSONB, nullable=False) # full ReportJSON
     created_at        = Column(DateTime, default=utcnow)
@@ -282,7 +282,7 @@ class TranscriptResult:
 
 ```python
 async def fetch_transcript(ticker: str) -> TranscriptResult:
-    """Waterfall: EDGAR → FMP → scraper. Return on first success (min 2000 chars)."""
+    """Waterfall: EDGAR → FMP → StockAnalysis scraper. Return on first success (min 2000 chars)."""
     for source_fn in [fetch_from_edgar, fetch_from_fmp, fetch_from_motley_fool]:
         try:
             result = await source_fn(ticker)
@@ -322,13 +322,16 @@ async def fetch_from_edgar(ticker: str) -> TranscriptResult | None:
 async def fetch_from_fmp(ticker: str) -> TranscriptResult | None: ...
 ```
 
-### `scraper.py` — third-tier fallback (Alpha Vantage)
+### `scraper.py` — third-tier fallback (StockAnalysis.com)
 
 ```python
-# Alpha Vantage EARNINGS_CALL_TRANSCRIPT endpoint.
-# Requires ALPHA_VANTAGE_KEY env var — returns None gracefully if absent.
-# Tries up to 3 most recent calendar quarters; returns on first hit ≥ 2000 chars.
+# StockAnalysis.com two-hop HTML scraper. No API key required.
+# Hop 1: GET /stocks/{ticker}/transcripts/ — parse listing page for most recent transcript slug
+# Hop 2: GET /stocks/{ticker}/transcripts/{slug}/ — extract text from article/main container
+# Uses browser-like User-Agent to avoid 403. Returns None on 403/404/429/short-text/HTTPError.
 # Function is still named fetch_from_motley_fool for waterfall compatibility.
+
+async def fetch_from_motley_fool(ticker: str) -> TranscriptResult | None: ...
 ```
 
 ---
