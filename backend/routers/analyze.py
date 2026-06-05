@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -20,7 +19,6 @@ from observability import update_trace
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-_CACHE_TTL_HOURS = 24
 _TICKER_RE = re.compile(r"^[A-Z0-9.]{1,10}$")
 
 _NODE_MESSAGES = {
@@ -47,11 +45,11 @@ def _sse(data: dict) -> str:
 
 
 async def _get_cached(ticker: str, db: AsyncSession) -> Report | None:
-    cutoff = datetime.utcnow() - timedelta(hours=_CACHE_TTL_HOURS)
     stmt = (
         select(Report)
-        .where(Report.ticker == ticker, Report.created_at >= cutoff)
+        .where(Report.ticker == ticker)
         .order_by(Report.created_at.desc())
+        .limit(1)
     )
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
