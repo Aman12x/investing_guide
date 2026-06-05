@@ -6,6 +6,6 @@ from datetime import date
 class TranscriptResult:
     ticker: str
     text: str
-    source: str            # "edgar" | "motley_fool"
+    source: str            # "edgar" | "fmp" | "stockanalysis"
     quarter: str | None
     report_date: date | None

@@ -12,7 +12,7 @@ _MIN_LENGTH = 2000
 
 
 async def fetch_transcript(ticker: str) -> TranscriptResult:
-    """Waterfall: EDGAR → FMP → scraper. Raises TranscriptNotFoundError if all fail."""
+    """Waterfall: EDGAR → FMP → StockAnalysis scraper. Raises TranscriptNotFoundError if all fail."""
     for source_fn in [fetch_from_edgar, fetch_from_fmp, fetch_from_motley_fool]:
         try:
             result = await source_fn(ticker)

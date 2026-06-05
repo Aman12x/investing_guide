@@ -52,6 +52,17 @@ _SUBMISSIONS_URL = f"https://data.sec.gov/submissions/CIK{_AAPL_CIK}.json"
 _FMP_URL = "https://financialmodelingprep.com/api/v3/earning_call_transcript/AAPL"
 _STOCKANALYSIS_URL = "https://stockanalysis.com/stocks/aapl/transcripts/"
 
+_SA_DETAIL_SLUG = "q1-2025-earnings-call"
+_SA_DETAIL_URL = f"https://stockanalysis.com/stocks/aapl/transcripts/{_SA_DETAIL_SLUG}/"
+
+_SA_LISTING_HTML = f"""
+<html><body>
+<a href="/stocks/aapl/transcripts/{_SA_DETAIL_SLUG}/">Q1 2025 Earnings Call</a>
+</body></html>
+"""
+
+_SA_DETAIL_HTML = f"<html><body><article>{_TRANSCRIPT_TEXT}</article></body></html>"
+
 
 def _fmp_response(text: str = _TRANSCRIPT_TEXT) -> dict:
     return [{"content": text, "quarter": 1, "year": 2025, "date": "2025-01-30"}]
@@ -69,6 +80,7 @@ def reset_cik_cache(monkeypatch):
 @respx.mock
 async def test_edgar_succeeds(monkeypatch):
     """EDGAR returns a long-enough transcript → result.source == 'edgar'."""
+    monkeypatch.setattr(edgar_module, "_NON_TRANSCRIPT_FILERS", frozenset())
     respx.get(_SUBMISSIONS_URL).mock(return_value=httpx.Response(200, json=_SUBMISSIONS))
     respx.get(_INDEX_URL).mock(return_value=httpx.Response(200, text=_INDEX_HTML))
     respx.get(_EXHIBIT_URL).mock(return_value=httpx.Response(200, text=_TRANSCRIPT_TEXT))
@@ -157,7 +169,7 @@ async def test_fmp_empty_list_continues_to_scraper(monkeypatch):
 
 @respx.mock
 async def test_scraper_none_exhausts_waterfall(monkeypatch):
-    """Scraper always returns None (per CLAUDE.md); waterfall ends with TranscriptNotFoundError."""
+    """StockAnalysis returns 403 (blocked) → waterfall exhausted → TranscriptNotFoundError."""
     monkeypatch.delenv("FMP_KEY", raising=False)
 
     empty_submissions = {
@@ -166,6 +178,33 @@ async def test_scraper_none_exhausts_waterfall(monkeypatch):
     respx.get(_SUBMISSIONS_URL).mock(return_value=httpx.Response(200, json=empty_submissions))
     # stockanalysis blocks non-browser requests
     respx.get(_STOCKANALYSIS_URL).mock(return_value=httpx.Response(403))
+
+    with pytest.raises(TranscriptNotFoundError):
+        await fetch_transcript("AAPL")
+
+
+@respx.mock
+async def test_fmp_empty_falls_through_to_stockanalysis(monkeypatch):
+    """FMP returns []; StockAnalysis listing + detail succeed → source == 'stockanalysis'."""
+    monkeypatch.setenv("FMP_KEY", "testkey")
+    # EDGAR skips AAPL immediately (_NON_TRANSCRIPT_FILERS) — no HTTP mock needed
+    respx.get(_FMP_URL).mock(return_value=httpx.Response(200, json=[]))
+    respx.get(_STOCKANALYSIS_URL).mock(return_value=httpx.Response(200, text=_SA_LISTING_HTML))
+    respx.get(_SA_DETAIL_URL).mock(return_value=httpx.Response(200, text=_SA_DETAIL_HTML))
+
+    result = await fetch_transcript("AAPL")
+    assert result.source == "stockanalysis"
+    assert len(result.text) >= 2000
+
+
+@respx.mock
+async def test_stockanalysis_listing_no_links_exhausts_waterfall(monkeypatch):
+    """SA listing page exists but has no transcript links → TranscriptNotFoundError."""
+    monkeypatch.delenv("FMP_KEY", raising=False)
+    # EDGAR skips AAPL immediately (_NON_TRANSCRIPT_FILERS) — no HTTP mock needed
+    respx.get(_STOCKANALYSIS_URL).mock(
+        return_value=httpx.Response(200, text="<html><body><p>nothing</p></body></html>")
+    )
 
     with pytest.raises(TranscriptNotFoundError):
         await fetch_transcript("AAPL")

@@ -122,12 +122,11 @@ ANTHROPIC_API_KEY=sk-ant-...
 EDGAR_USER_AGENT="EarningsLens yourname@email.com"   # required by SEC fair-use policy
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173,https://yourapp.up.railway.app
 
-# Transcript sources (waterfall: EDGAR → FMP → Alpha Vantage)
+# Transcript sources (waterfall: EDGAR → FMP → StockAnalysis scraper)
 FMP_KEY=...          # financialmodelingprep.com — free tier 250 req/day; covers all S&P 500+
                      # optional but required for major tickers (AAPL, MSFT, etc.) that don't
                      # file transcripts with EDGAR
-ALPHA_VANTAGE_KEY=...  # alphavantage.co — third-tier fallback; EARNINGS_CALL_TRANSCRIPT endpoint
-                       # optional; free tier limited, premium recommended for this endpoint
+# StockAnalysis scraper (third tier): no key required; httpx + BeautifulSoup, browser UA
 
 # External signal sources
 REDDIT_CLIENT_ID=...
