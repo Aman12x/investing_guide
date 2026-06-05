@@ -128,6 +128,18 @@ class TestContradictions:
         report = ReportJSON(**bad)
         assert len(report.contradictions) == 3
 
+    def test_null_items_stripped(self, sample_report):
+        bad = copy.deepcopy(sample_report)
+        bad["contradictions"] = [None, "valid item", None]
+        report = ReportJSON(**bad)
+        assert report.contradictions == ["valid item"]
+
+    def test_all_null_becomes_empty(self, sample_report):
+        bad = copy.deepcopy(sample_report)
+        bad["contradictions"] = [None, None]
+        report = ReportJSON(**bad)
+        assert report.contradictions == []
+
 
 class TestRisksLevel:
     @pytest.mark.parametrize("level", ["high", "med", "low"])

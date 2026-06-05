@@ -166,10 +166,12 @@ class ReportJSON(BaseModel):
             return f"Q{m.group(1)} {m.group(2)}"
         raise ValueError(f"quarter '{v}' is not a recognised format; expected 'Q1 2025'")
 
-    @field_validator("contradictions")
+    @field_validator("contradictions", mode="before")
     @classmethod
-    def cap_contradictions(cls, v: list[str]) -> list[str]:
-        return v[:3]
+    def cap_contradictions(cls, v: object) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        return [item for item in v if isinstance(item, str)][:3]
 
     @field_validator("keyHighlights")
     @classmethod
